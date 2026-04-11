@@ -450,9 +450,15 @@ add_action( 'wp_footer', function() {
 } );
 
 add_shortcode( 'kaslek_ad', function() {
-	return '<div style="margin:50px 0">'
+	static $registered = false;
+	if ( ! $registered ) {
+		$registered = true;
+		add_action( 'wp_footer', function() {
+			echo '<script>document.querySelectorAll(".kaslek-ad-sc ins.adsbygoogle").forEach(function(el){(adsbygoogle=window.adsbygoogle||[]).push({});});</script>' . "\n";
+		}, 99 );
+	}
+	return '<div class="kaslek-ad-sc" style="margin:50px 0">'
 	     . '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>'
-	     . '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>'
 	     . '</div>';
 } );
 
