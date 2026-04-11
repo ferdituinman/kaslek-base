@@ -18,7 +18,7 @@
 		</div>
 	</div>
 	<div class="footer-bottom">
-		<p>&copy; <?php echo date( 'Y' ); ?> KasLek. Alle rechten voorbehouden.</p>
+		<p>&copy; <?php echo date( 'Y' ); ?> KasLek. Alle rechten voorbehouden. test</p>
 		<p>KasLek is een onafhankelijk platform voor burgerjournalistiek.</p>
 	</div>
 </footer>
