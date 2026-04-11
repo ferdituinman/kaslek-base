@@ -172,7 +172,7 @@ function kaslek_counter_script() {
 		els.forEach(function (el) {
 			var target   = parseFloat(el.getAttribute('data-total'));
 			if ( isNaN(target) || target <= 0 ) return;
-			var duration = 1000;
+			var duration = 1500;
 			var start    = null;
 			function fmt(n) {
 				return Math.round(n).toLocaleString('nl-NL');
@@ -188,7 +188,7 @@ function kaslek_counter_script() {
 					el.textContent = fmt(target);
 				}
 			}
-			requestAnimationFrame(step);
+			setTimeout(function() { requestAnimationFrame(step); }, 500);
 		});
 	})();
 	</script>
@@ -421,9 +421,12 @@ add_action( 'admin_head-edit.php', function () {
 	}
 } );
 
+add_action( 'wp_head', function() {
+	echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>' . "\n";
+} );
+
 add_shortcode( 'kaslek_ad', function() {
 	return '<div style="margin:50px 0">'
-	     . '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>'
 	     . '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>'
 	     . '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>'
 	     . '</div>';

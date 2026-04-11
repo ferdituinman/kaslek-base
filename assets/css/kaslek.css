@@ -101,7 +101,7 @@ a:hover { text-decoration: underline; }
 .tag-slider::-webkit-scrollbar { display: none; }
 .tag-slider-list { display: flex; list-style: none; margin: 0; padding: 0; gap: 0; white-space: nowrap; align-items: center; min-height: 40px; }
 .tag-slider-list li { flex-shrink: 0; display: flex; align-items: center; }
-.tag-slider-list a { font-family: var(--font); font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--primary); text-decoration: none; padding: 10px 16px; display: flex; align-items: center; transition: background 0.15s, opacity 0.15s; opacity: 0.7; }
+.tag-slider-list a { font-family: var(--font); font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--primary); text-decoration: none; padding: 11px 16px 9px; display: flex; align-items: center; line-height: 1; transition: background 0.15s, opacity 0.15s; opacity: 0.7; }
 .tag-slider-list a:hover { opacity: 1; background: #C4CDD8; text-decoration: none; }
 .tag-slider-list .current-tag > a { opacity: 1; background: #C4CDD8; }
 

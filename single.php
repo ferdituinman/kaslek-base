@@ -103,7 +103,6 @@
 
 			<?php if ( wp_is_mobile() ) : ?>
 			<div class="kaslek-ad-mobile-share">
-				<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>
 				<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
 				<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 			</div>
@@ -158,7 +157,6 @@
 
 		<?php if ( ! wp_is_mobile() ) : ?>
 		<div style="margin:50px 0;">
-			<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>
 			<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
 			<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 		</div>
@@ -231,7 +229,6 @@ $gerelateerd_q = new WP_Query([
 
 <?php if ( ! wp_is_mobile() ) : ?>
 <div class="kaslek-ad-desktop-bottom">
-	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>
 	<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
 	<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
