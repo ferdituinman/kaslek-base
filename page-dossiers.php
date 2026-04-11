@@ -17,7 +17,7 @@ $dossiers = [
 	[ 'slug' => 'veiligheid-en-handhaving',          'label' => 'Veiligheid & handhaving',         'size' => 'half',   'img' => 'https://kaslek.nl/wp-content/uploads/2026/03/ToJDLRoOczcgLgmgnhIly_hnZNE51r.jpg' ],
 	[ 'slug' => 'zorg-en-sociaal',                   'label' => 'Zorg & sociaal',                  'size' => 'third-wide', 'img' => 'https://kaslek.nl/wp-content/uploads/2026/03/ooXXtVz2seglpncDBt2xb_t8rN6by5.jpg' ],
 	[ 'slug' => 'stikstof-en-natuur',                'label' => 'Stikstof & natuur',               'size' => 'third',  'img' => 'https://kaslek.nl/wp-content/compressx-nextgen/uploads/2026/03/SYcFJQRksSWO470_aA10f_7UKCIBz4.jpg.webp' ],
-	[ 'slug' => 'belastingen-en-heffingen',          'label' => 'Belastingen & heffingen',         'size' => 'third',  'img' => 'https://kaslek.nl/wp-content/compressx-nextgen/uploads/2026/03/LL5hLHw2Mi9ulWbk1q_Fn_K4cJsGux.jpg.webp' ],
+	[ 'slug' => 'belastingen-en-heffingen',          'label' => 'Belastingen & heffingen',         'size' => 'third',  'img' => 'https://kaslek.nl/wp-content/uploads/2026/01/s7-W6DD1JpQz1pfZzCNrU-1024x717.jpg' ],
 ];
 ?>
 

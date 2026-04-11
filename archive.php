@@ -155,6 +155,8 @@ if ( count( $trending_posts ) < 5 ) {
 	</a>
 	<?php endif; ?>
 
+	<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+
 	<!-- HEADER -->
 	<?php if ( ! $is_mobile ) : ?>
 	<div class="archive-hero">

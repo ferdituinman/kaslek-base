@@ -143,6 +143,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 		<?php endforeach; ?>
 	</div>
 
+	<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 	<!-- MEEST GELEZEN MOBIEL -->
 	<div class="sidebar-widget ad-show-mobile mobile-trending">
@@ -156,6 +157,10 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 		</div>
 		<?php endforeach; ?>
 	</div>
+
+	<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+
+	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 	<!-- MEER TRANSPARANTIE -->
 	<?php
@@ -213,6 +218,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 		</div>
 	</div>
 
+	<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 	<!-- MEER VERHALEN -->
