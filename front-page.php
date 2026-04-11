@@ -144,10 +144,6 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 	</div>
 
 
-	<!-- AD 2 -->
-	<div class="ad-centered"><div class="ad-centered-inner"><?php kaslek_get_ad('horizontaal_2'); ?></div></div>
-
-
 	<!-- MEEST GELEZEN MOBIEL -->
 	<div class="sidebar-widget ad-show-mobile mobile-trending">
 		<div class="sidebar-widget-title">Meest gelezen</div>
@@ -216,9 +212,8 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 
 		</div>
 	</div>
-	<!-- AD 1 -->
-	<div class="ad-leaderboard"><?php kaslek_get_ad('horizontaal'); ?></div>
 
+	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 	<!-- MEER VERHALEN -->
 	<?php
@@ -274,7 +269,28 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 			</a>
 			<?php endforeach; ?>
 		</div>
+		<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+		<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 		<?php if ( $extra_posts ) : ?>
+		<?php if ( wp_is_mobile() ) : ?>
+			<?php foreach ( $extra_posts as $i => $post ) : ?>
+			<div class="scroll-grid">
+				<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="scroll-card" style="text-decoration:none;">
+					<div style="aspect-ratio:3/2;overflow:hidden;position:relative;background:#1B3E5F;">
+						<?php if ( has_post_thumbnail( $post ) ) : ?>
+							<img src="<?php echo esc_url( get_the_post_thumbnail_url( $post, 'medium_large' ) ); ?>"
+							     alt="<?php echo esc_attr( get_the_title( $post ) ); ?>"
+							     style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;max-width:none;">
+						<?php endif; ?>
+					</div>
+					<div class="scroll-card-content">
+						<span class="scroll-card-title"><?php echo esc_html( get_the_title( $post ) ); ?></span>
+						<p class="scroll-card-excerpt"><?php echo esc_html( get_the_excerpt( $post ) ); ?></p>
+					</div>
+				</a>
+			</div>
+			<?php endforeach; ?>
+		<?php else : ?>
 		<div class="scroll-grid scroll-grid-2">
 			<?php foreach ( $extra_posts as $post ) : ?>
 			<a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="scroll-card" style="text-decoration:none;">
@@ -293,6 +309,9 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 			<?php endforeach; ?>
 		</div>
 		<?php endif; ?>
+		<?php endif; ?>
+		<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+		<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 		<?php if ( count( $scroll_posts ) > 3 ) : ?>
 		<div class="scroll-grid">
 			<?php foreach ( array_slice( $scroll_posts, 3 ) as $post ) : ?>
@@ -313,9 +332,6 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 		</div>
 		<?php endif; ?>
 	</div>
-
-	<!-- AD 4 -->
-	<div class="ad-footer-strip"><?php kaslek_get_ad('horizontaal_3'); ?></div>
 
 
 </div><!-- /content -->

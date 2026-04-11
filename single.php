@@ -101,9 +101,15 @@
 </script>
 			</div>
 
-		</div><!-- /article-white-block -->
+			<?php if ( wp_is_mobile() ) : ?>
+			<div class="kaslek-ad-mobile-share">
+				<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>
+				<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
+				<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+			</div>
+			<?php endif; ?>
 
-		<div class="article-ad"><?php kaslek_get_ad('horizontaal'); ?></div>
+			</div><!-- /article-white-block -->
 
 		<div class="nieuwstip">
 			<svg viewBox="0 0 24 24" stroke-width="1.5" style="width:20px;height:20px;stroke:#1B3E5F;fill:none;flex-shrink:0;"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
@@ -115,12 +121,20 @@
 	<aside class="article-sidebar">
 
 		<?php
+		// Meer verhalen: 21 dagen, fallback zonder datum
 		$sidebar_q = new WP_Query([
 			'posts_per_page' => 4,
 			'post_status'    => 'publish',
 			'post__not_in'   => [ get_the_ID() ],
 			'date_query'     => [ [ 'after' => '21 days ago', 'inclusive' => true ] ],
 		]);
+		if ( ! $sidebar_q->have_posts() ) {
+			$sidebar_q = new WP_Query([
+				'posts_per_page' => 4,
+				'post_status'    => 'publish',
+				'post__not_in'   => [ get_the_ID() ],
+			]);
+		}
 		?>
 		<?php if ( $sidebar_q->have_posts() ) : ?>
 		<div class="sidebar-block">
@@ -142,7 +156,13 @@
 		</div>
 		<?php endif; ?>
 
-		<div class="sidebar-ad"><?php kaslek_get_ad('vierkant'); ?></div>
+		<?php if ( ! wp_is_mobile() ) : ?>
+		<div style="margin:50px 0;">
+			<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>
+			<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
+			<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+		</div>
+		<?php endif; ?>
 
 		<?php
 		$trending_q = new WP_Query([
@@ -167,8 +187,6 @@
 			<?php endwhile; wp_reset_postdata(); ?>
 		</div>
 		<?php endif; ?>
-
-		<div class="sidebar-ad"><?php kaslek_get_ad('verticaal'); ?></div>
 
 	</aside>
 
@@ -211,7 +229,13 @@ $gerelateerd_q = new WP_Query([
 </div>
 <?php endif; ?>
 
-<div class="ad-leaderboard ad-leaderboard-centered"><?php kaslek_get_ad('horizontaal'); ?></div>
+<?php if ( ! wp_is_mobile() ) : ?>
+<div class="kaslek-ad-desktop-bottom">
+	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>
+	<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
+	<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+<?php endif; ?>
 
 <?php endwhile; ?>
 

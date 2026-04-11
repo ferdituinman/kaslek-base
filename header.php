@@ -94,7 +94,7 @@
 	</div>
 
 	<div class="teller">
-		Dit jaar <strong>&euro; <?php echo do_shortcode( '[kaslek_total]' ); ?></strong> aan overheidsuitgaven blootgelegd
+		Dit jaar <strong>&euro; <?php echo do_shortcode( '[kaslek_total]' ); ?></strong> aan overheidsuitgaven blootgelegd.
 	</div>
 
 	<nav class="site-nav" aria-label="Primaire navigatie">

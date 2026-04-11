@@ -32,7 +32,7 @@ function kaslek_scripts() {
 		'kaslek-main',
 		get_template_directory_uri() . '/assets/css/kaslek.css',
 		[],
-		'1.0.0'
+		filemtime( get_template_directory() . '/assets/css/kaslek.css' )
 	);
 
 	if ( is_front_page() ) {
@@ -162,6 +162,40 @@ function kaslek_view_footer_script() {
 }
 add_action( 'wp_footer', 'kaslek_view_footer_script' );
 
+function kaslek_counter_script() {
+	if ( ! wp_script_is( 'kaslek-counter', 'done' ) ) :
+	?>
+	<script>
+	(function () {
+		var els = document.querySelectorAll('.kaslek-total[data-total]');
+		if ( ! els.length ) return;
+		els.forEach(function (el) {
+			var target   = parseFloat(el.getAttribute('data-total'));
+			if ( isNaN(target) || target <= 0 ) return;
+			var duration = 1000;
+			var start    = null;
+			function fmt(n) {
+				return Math.round(n).toLocaleString('nl-NL');
+			}
+			function step(ts) {
+				if (!start) start = ts;
+				var p = Math.min((ts - start) / duration, 1);
+				var eased = 1 - Math.pow(1 - p, 3);
+				el.textContent = fmt(eased * target);
+				if (p < 1) {
+					requestAnimationFrame(step);
+				} else {
+					el.textContent = fmt(target);
+				}
+			}
+			requestAnimationFrame(step);
+		});
+	})();
+	</script>
+	<?php
+	endif;
+}
+add_action( 'wp_footer', 'kaslek_counter_script' );
 
 /* ─────────────────────────────────────────
    DOSSIER REWRITE RULES
@@ -222,353 +256,188 @@ function kaslek_dossier_canonical( $canonical ) {
 add_filter( 'wpseo_canonical', 'kaslek_dossier_canonical' );
 add_filter( 'wpseo_opengraph_url', 'kaslek_dossier_canonical' );
 
-
 /* ─────────────────────────────────────────
-   GOOGLE ADS
+   KASLEK TOTAL
 ───────────────────────────────────────── */
 
-function kaslek_inject_adsense() {
-	$script = get_option( 'kaslek_adsense_script', '' );
-	if ( ! empty( trim( $script ) ) ) {
-		echo "\n" . $script . "\n";
-	}
-}
-add_action( 'wp_head', 'kaslek_inject_adsense' );
+define( 'KASLEK_TOTAL_YEAR', 2026 );
 
-function kaslek_get_ad( $slot ) {
-	$key     = 'kaslek_ad_' . $slot;
-	$snippet = get_option( $key, '' );
-	if ( empty( trim( $snippet ) ) ) return;
-	echo $snippet;
-}
-
-function kaslek_ads_menu() {
-	add_submenu_page(
-		'edit.php?post_type=' . KASLEK_AD_CPT,
-		'AdSense Codes',
-		'AdSense Codes',
-		'manage_options',
-		'kaslek-ads',
-		'kaslek_ads_page'
-	);
-}
-add_action( 'admin_menu', 'kaslek_ads_menu' );
-
-
-
-
-
-
-
-
-
-
-
-
-
-function kaslek_ads_save() {
-	if (
-		! isset( $_POST['kaslek_ads_nonce'] ) ||
-		! wp_verify_nonce( $_POST['kaslek_ads_nonce'], 'kaslek_ads_save' ) ||
-		! current_user_can( 'manage_options' )
-	) return;
-
-	$fields = [
-		'kaslek_adsense_script',
-		'kaslek_ad_horizontaal',
-		'kaslek_ad_horizontaal_2',
-		'kaslek_ad_horizontaal_3',
-		'kaslek_ad_vierkant',
-		'kaslek_ad_verticaal',
-	];
-
-	foreach ( $fields as $field ) {
-		if ( isset( $_POST[ $field ] ) ) {
-			update_option( $field, wp_unslash( $_POST[ $field ] ) );
-		}
-	}
-}
-add_action( 'admin_post_kaslek_ads_save', 'kaslek_ads_save' );
-
-function kaslek_ads_page() {
-	if ( isset( $_POST['kaslek_ads_nonce'] ) ) {
-		kaslek_ads_save();
-		echo '<div class="notice notice-success is-dismissible"><p>Instellingen opgeslagen.</p></div>';
-	}
-
-	$defaults = [
-		'kaslek_adsense_script'   => '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>',
-		'kaslek_ad_horizontaal'   => '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>',
-		'kaslek_ad_horizontaal_2' => '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="6846276880" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>',
-		'kaslek_ad_horizontaal_3' => '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="3283312109" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>',
-		'kaslek_ad_vierkant'      => '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>',
-		'kaslek_ad_verticaal'     => '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="6787442841" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>',
-	];
-
-	foreach ( $defaults as $key => $value ) {
-		if ( get_option( $key ) === false ) {
-			update_option( $key, $value );
-		}
-	}
-
-	$fields = [
-		'kaslek_adsense_script' => [
-			'label' => 'AdSense-script (globaal)',
-			'desc'  => 'Wordt automatisch in &lt;head&gt; geladen. Bevat alleen het &lt;script async src="..."&gt; blok, geen &lt;ins&gt;.',
-		],
-		'kaslek_ad_horizontaal' => [
-			'label' => 'Display — Horizontaal 1 (responsief)',
-			'desc'  => 'Leaderboard bovenaan de pagina.',
-		],
-		'kaslek_ad_horizontaal_2' => [
-			'label' => 'Display — Horizontaal 2 (responsief)',
-			'desc'  => 'Midden pagina (ad-centered).',
-		],
-		'kaslek_ad_horizontaal_3' => [
-			'label' => 'Display — Horizontaal 3 (responsief)',
-			'desc'  => 'Footer-strip onderaan.',
-		],
-		'kaslek_ad_vierkant' => [
-			'label' => 'Display — Vierkant / In-article (responsief)',
-			'desc'  => 'Wordt gebruikt in de [kaslek_ad] shortcode.',
-		],
-		'kaslek_ad_verticaal' => [
-			'label' => 'Display — Verticaal (responsief)',
-			'desc'  => 'Sidebar, tweede positie.',
-		],
-	];
-	?>
-	<div class="wrap">
-		<h1>AdSense Codes</h1>
-		<p>Plak hier de snippets uit je Google AdSense-account.</p>
-		<form method="post" action="">
-			<?php wp_nonce_field( 'kaslek_ads_save', 'kaslek_ads_nonce' ); ?>
-			<table class="form-table" role="presentation">
-				<?php foreach ( $fields as $key => $field ) : ?>
-				<tr>
-					<th scope="row">
-						<label for="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label>
-					</th>
-					<td>
-						<textarea
-							id="<?php echo esc_attr( $key ); ?>"
-							name="<?php echo esc_attr( $key ); ?>"
-							rows="5"
-							style="width:100%;font-family:monospace;font-size:13px;"
-						><?php echo esc_textarea( get_option( $key, '' ) ); ?></textarea>
-						<p class="description"><?php echo esc_html( $field['desc'] ); ?></p>
-					</td>
-				</tr>
-				<?php endforeach; ?>
-			</table>
-			<?php submit_button( 'Opslaan' ); ?>
-		</form>
-	</div>
-	<?php
-}
-
-
-/* ─────────────────────────────────────────
-   ADS ROTATOR + CPT
-───────────────────────────────────────── */
-
-define( 'KASLEK_AD_CPT',          'kaslek_ad' );
-define( 'KASLEK_AD_META_CAT',     '_kaslek_ad_category' );
-define( 'KASLEK_AD_META_URL',     '_kaslek_ad_url' );
-define( 'KASLEK_AD_META_HTML',    '_kaslek_ad_html' );
-define( 'KASLEK_AD_META_IMPR',    '_kaslek_ad_impressions' );
-define( 'KASLEK_AD_META_CLICKS',  '_kaslek_ad_clicks' );
-
-function kaslek_rotator_register_cpt() {
-	register_post_type( KASLEK_AD_CPT, [
-		'labels' => [
-			'name'          => 'Eigen & Affiliate Ads',
-			'singular_name' => 'Ad',
-			'menu_name'     => 'Ads Manager',
-			'all_items'     => 'Alle Ads',
-			'add_new'       => 'Nieuwe Ad',
-			'add_new_item'  => 'Nieuwe Ad toevoegen',
-		],
-		'public'          => false,
-		'show_ui'         => true,
-		'show_in_menu'    => true,
-		'menu_position'   => 2,
-		'menu_icon'       => 'dashicons-megaphone',
-		'supports'        => [ 'title', 'thumbnail', 'author' ],
-		'capability_type' => 'post',
-		'map_meta_cap'    => true,
+add_action( 'init', function () {
+	register_post_meta( 'post', 'kaslek_amount_cents', [
+		'type'          => 'integer',
+		'single'        => true,
+		'show_in_rest'  => true,
+		'auth_callback' => function () { return current_user_can( 'edit_posts' ); },
 	] );
-}
-add_action( 'init', 'kaslek_rotator_register_cpt' );
+} );
 
-function kaslek_rotator_add_metabox() {
-	add_meta_box( 'kaslek_ad_settings', 'Ad Instellingen', 'kaslek_rotator_render_metabox', KASLEK_AD_CPT, 'normal', 'high' );
-}
-add_action( 'add_meta_boxes', 'kaslek_rotator_add_metabox' );
+add_action( 'add_meta_boxes', function () {
+	add_meta_box( 'kaslek_amount_box', 'Bedrag (in euro\'s)', function ( $post ) {
+		$cents = (int) get_post_meta( $post->ID, 'kaslek_amount_cents', true );
+		$euros = $cents ? number_format( $cents / 100, 2, ',', '' ) : '';
+		wp_nonce_field( 'kaslek_save_amount', 'kaslek_amount_nonce' );
+		echo '<label for="kaslek_amount_eur">Bedrag (bijv. 12345,67):</label>';
+		echo '<input type="text" id="kaslek_amount_eur" name="kaslek_amount_eur" value="' . esc_attr( $euros ) . '" style="width:100%;">';
+	}, 'post', 'side', 'default' );
+} );
 
-function kaslek_rotator_render_metabox( $post ) {
-	wp_nonce_field( 'kaslek_ad_save', 'kaslek_ad_nonce' );
-	$cat  = get_post_meta( $post->ID, KASLEK_AD_META_CAT, true ) ?: 'eigen';
-	$url  = get_post_meta( $post->ID, KASLEK_AD_META_URL, true );
-	$html = get_post_meta( $post->ID, KASLEK_AD_META_HTML, true );
-	?>
-	<div style="margin-bottom:15px;">
-		<label><strong>Type Ad:</strong></label><br>
-		<select name="kaslek_ad_cat" id="kaslek_ad_cat" style="width:100%;max-width:400px;">
-			<option value="eigen"     <?php selected( $cat, 'eigen' ); ?>>Eigen Ad (Afbeelding + Link)</option>
-			<option value="affiliate" <?php selected( $cat, 'affiliate' ); ?>>Affiliate (HTML/Bol.com)</option>
-		</select>
-	</div>
-	<div id="kaslek_section_url" style="margin-bottom:15px;">
-		<label><strong>Doel URL:</strong></label><br>
-		<input type="url" name="kaslek_ad_url" value="<?php echo esc_attr( $url ); ?>" style="width:100%">
-	</div>
-	<div id="kaslek_section_html">
-		<label><strong>HTML Code:</strong></label><br>
-		<textarea name="kaslek_ad_html" style="width:100%;height:150px;font-family:monospace;"><?php echo esc_textarea( $html ); ?></textarea>
-	</div>
-	<script>
-	(function(){
-		function t(){
-			var v = document.getElementById('kaslek_ad_cat').value;
-			document.getElementById('kaslek_section_url').style.display  = v === 'eigen' ? '' : 'none';
-			document.getElementById('kaslek_section_html').style.display = v === 'eigen' ? 'none' : '';
-		}
-		document.getElementById('kaslek_ad_cat').addEventListener('change', t);
-		t();
-	})();
-	</script>
-	<?php
-}
-
-function kaslek_rotator_save_metabox( $post_id ) {
-	if ( ! isset( $_POST['kaslek_ad_nonce'] ) || ! wp_verify_nonce( $_POST['kaslek_ad_nonce'], 'kaslek_ad_save' ) ) return;
+add_action( 'save_post_post', function ( $post_id, $post, $update ) {
+	if ( ! isset( $_POST['kaslek_amount_nonce'] ) || ! wp_verify_nonce( $_POST['kaslek_amount_nonce'], 'kaslek_save_amount' ) ) return;
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-	if ( isset( $_POST['kaslek_ad_cat'] ) )  update_post_meta( $post_id, KASLEK_AD_META_CAT,  sanitize_text_field( $_POST['kaslek_ad_cat'] ) );
-	if ( isset( $_POST['kaslek_ad_url'] ) )  update_post_meta( $post_id, KASLEK_AD_META_URL,  esc_url_raw( $_POST['kaslek_ad_url'] ) );
-	if ( isset( $_POST['kaslek_ad_html'] ) ) update_post_meta( $post_id, KASLEK_AD_META_HTML, $_POST['kaslek_ad_html'] );
-}
-add_action( 'save_post_' . KASLEK_AD_CPT, 'kaslek_rotator_save_metabox' );
-
-function kaslek_rotator_admin_columns( $cols ) {
-	return [
-		'cb'      => $cols['cb'],
-		'title'   => $cols['title'],
-		'ad_type' => 'Type',
-		'stats'   => 'Impressies / Kliks',
-		'author'  => $cols['author'],
-		'date'    => $cols['date'],
-	];
-}
-add_filter( 'manage_edit-' . KASLEK_AD_CPT . '_columns', 'kaslek_rotator_admin_columns' );
-
-function kaslek_rotator_admin_column_values( $col, $post_id ) {
-	if ( $col === 'ad_type' ) {
-		$cat = get_post_meta( $post_id, KASLEK_AD_META_CAT, true ) ?: 'eigen';
-		echo esc_html( ucfirst( $cat ) );
-	} elseif ( $col === 'stats' ) {
-		$impr  = (int) get_post_meta( $post_id, KASLEK_AD_META_IMPR, true );
-		$click = (int) get_post_meta( $post_id, KASLEK_AD_META_CLICKS, true );
-		echo '<strong>' . $impr . '</strong> / <strong>' . $click . '</strong>';
+	if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+	if ( isset( $_POST['kaslek_amount_eur'] ) && $_POST['kaslek_amount_eur'] !== '' ) {
+		$raw   = str_replace( [ '.', ' ' ], [ '', '' ], $_POST['kaslek_amount_eur'] );
+		$raw   = str_replace( ',', '.', $raw );
+		$cents = (int) round( floatval( $raw ) * 100 );
+		update_post_meta( $post_id, 'kaslek_amount_cents', $cents );
+	} else {
+		delete_post_meta( $post_id, 'kaslek_amount_cents' );
 	}
-}
-add_action( 'manage_' . KASLEK_AD_CPT . '_posts_custom_column', 'kaslek_rotator_admin_column_values', 10, 2 );
+	kaslek_recompute_total();
+}, 10, 3 );
 
-function kaslek_rotator_report_menu() {
-	add_submenu_page( 'edit.php?post_type=' . KASLEK_AD_CPT, 'Rapportage', 'Rapportage', 'edit_posts', 'kaslek-rotator-report', 'kaslek_rotator_report_page' );
-}
-add_action( 'admin_menu', 'kaslek_rotator_report_menu' );
-
-function kaslek_rotator_report_page() {
-	$ads   = get_posts( [ 'post_type' => KASLEK_AD_CPT, 'posts_per_page' => -1 ] );
-	$stats = [];
-	foreach ( $ads as $ad ) {
-		$author = get_the_author_meta( 'display_name', $ad->post_author );
-		if ( ! isset( $stats[ $author ] ) ) $stats[ $author ] = [ 'impr' => 0, 'click' => 0 ];
-		$stats[ $author ]['impr']  += (int) get_post_meta( $ad->ID, KASLEK_AD_META_IMPR, true );
-		$stats[ $author ]['click'] += (int) get_post_meta( $ad->ID, KASLEK_AD_META_CLICKS, true );
+function kaslek_recompute_total() {
+	$q = new WP_Query( [
+		'post_type'      => 'post',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'meta_key'       => 'kaslek_amount_cents',
+		'meta_compare'   => 'EXISTS',
+		'date_query'     => [ [ 'year' => (int) KASLEK_TOTAL_YEAR ] ],
+		'no_found_rows'  => true,
+		'fields'         => 'ids',
+	] );
+	$sum = 0;
+	foreach ( $q->posts as $id ) {
+		$c = (int) get_post_meta( $id, 'kaslek_amount_cents', true );
+		if ( $c > 0 ) $sum += $c;
 	}
-	?>
-	<div class="wrap">
-		<h1>Rapportage per auteur (Eigen Ads)</h1>
-		<table class="widefat striped" style="margin-top:20px;">
-			<thead><tr><th>Auteur</th><th>Impressies</th><th>Kliks</th><th>CTR</th></tr></thead>
-			<tbody>
-			<?php foreach ( $stats as $name => $d ) :
-				$ctr = $d['impr'] > 0 ? round( ( $d['click'] / $d['impr'] ) * 100, 2 ) : 0; ?>
-				<tr>
-					<td><strong><?php echo esc_html( $name ); ?></strong></td>
-					<td><?php echo (int) $d['impr']; ?></td>
-					<td><?php echo (int) $d['click']; ?></td>
-					<td><?php echo esc_html( $ctr ); ?>%</td>
-				</tr>
-			<?php endforeach; ?>
-			</tbody>
-		</table>
-	</div>
-	<?php
+	update_option( 'kaslek_total_cents', $sum, false );
+	update_option( 'kaslek_total_updated', current_time( 'mysql' ), false );
+	return $sum;
 }
 
-// Shortcode [kaslek_ad] — gebruikt echo zodat scripts niet worden gefilterd
-function kaslek_rotator_shortcode() {
-	$ads = get_posts( [ 'post_type' => KASLEK_AD_CPT, 'post_status' => 'publish', 'posts_per_page' => -1 ] );
-
-	$idx = [ 'eigen' => [], 'affiliate' => [] ];
-	foreach ( $ads as $ad ) {
-		$c = get_post_meta( $ad->ID, KASLEK_AD_META_CAT, true ) ?: 'eigen';
-		if ( isset( $idx[ $c ] ) ) $idx[ $c ][] = $ad->ID;
+add_action( 'transition_post_status', function ( $new, $old, $post ) {
+	if ( $post->post_type !== 'post' ) return;
+	if ( in_array( $new, [ 'publish', 'draft', 'pending', 'trash' ], true ) ||
+	     in_array( $old, [ 'publish', 'draft', 'pending', 'trash' ], true ) ) {
+		kaslek_recompute_total();
 	}
+}, 10, 3 );
 
-	$has_google = ! empty( trim( get_option( 'kaslek_ad_vierkant', '' ) ) );
+add_action( 'deleted_post', 'kaslek_recompute_total' );
 
-	$avail = [];
-	foreach ( [ 'eigen' => 34, 'google' => 33, 'affiliate' => 33 ] as $k => $w ) {
-		if ( $k === 'google' && $has_google )           { $avail[ $k ] = $w; continue; }
-		if ( $k !== 'google' && ! empty( $idx[ $k ] ) ) { $avail[ $k ] = $w; }
+add_action( 'wp', function () {
+	if ( ! wp_next_scheduled( 'kaslek_hourly_recompute' ) ) {
+		wp_schedule_event( time(), 'hourly', 'kaslek_hourly_recompute' );
 	}
-	if ( ! $avail ) return '';
+} );
+add_action( 'kaslek_hourly_recompute', 'kaslek_recompute_total' );
 
-	$state  = get_option( 'kaslek_rr_state', [ 'eigen' => 0, 'google' => 0, 'affiliate' => 0 ] );
-	$chosen = array_key_first( $avail );
-	$max    = -999999;
-	foreach ( $avail as $k => $w ) {
-		$state[ $k ] = ( $state[ $k ] ?? 0 ) + $w;
-		if ( $state[ $k ] > $max ) { $max = $state[ $k ]; $chosen = $k; }
+add_shortcode( 'kaslek_total', function ( $atts ) {
+	$a        = shortcode_atts( [ 'format' => '%s', 'decimals' => '0' ], $atts, 'kaslek_total' );
+	$cents    = (int) get_option( 'kaslek_total_cents', 0 );
+	$dec      = max( 0, (int) $a['decimals'] );
+	$eur      = $cents / 100;
+	$formatted = number_format( $eur, $dec, ',', '.' );
+	$output   = sprintf( $a['format'], $formatted );
+	return sprintf(
+		'<span class="kaslek-total" data-total="%s" data-year="%d">%s</span>',
+		esc_attr( number_format( $eur, 2, '.', '' ) ),
+		(int) KASLEK_TOTAL_YEAR,
+		esc_html( $output )
+	);
+} );
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'kaslek/v1', '/total', [
+		'methods'             => 'GET',
+		'callback'            => function () {
+			$cents = (int) get_option( 'kaslek_total_cents', 0 );
+			return [
+				'year'        => (int) KASLEK_TOTAL_YEAR,
+				'total_cents' => $cents,
+				'total_eur'   => number_format( $cents / 100, 2, '.', '' ),
+				'updated'     => get_option( 'kaslek_total_updated' ),
+			];
+		},
+		'permission_callback' => '__return_true',
+	] );
+} );
+
+add_action( 'admin_init', function () {
+	if ( isset( $_GET['kaslek_recompute'] ) && current_user_can( 'manage_options' ) && ( $_GET['page'] ?? '' ) === 'kaslek-total-tool' ) {
+		check_admin_referer( 'kaslek_recompute' );
+		kaslek_recompute_total();
+		wp_redirect( admin_url( 'tools.php?page=kaslek-total-tool&recomputed=1' ) );
+		exit;
 	}
-	$state[ $chosen ] -= 100;
-	update_option( 'kaslek_rr_state', $state );
+} );
 
-	// Google: ob_start vangt echo van kaslek_get_ad() op zodat het als return werkt
-	if ( $chosen === 'google' ) {
-		ob_start();
-		kaslek_get_ad( 'vierkant' );
-		return '<div class="kaslek-ad-external">' . ob_get_clean() . '</div>';
+add_action( 'admin_menu', function () {
+	add_management_page( 'Kaslek Totaal', 'Kaslek Totaal', 'manage_options', 'kaslek-total-tool', function () {
+		$url = wp_nonce_url( admin_url( 'tools.php?page=kaslek-total-tool&kaslek_recompute=1' ), 'kaslek_recompute' );
+		if ( isset( $_GET['recomputed'] ) ) echo '<div class="updated notice"><p>Herberekend.</p></div>';
+		$cents = (int) get_option( 'kaslek_total_cents', 0 );
+		echo '<div class="wrap"><h1>Kaslek Totaal</h1>';
+		echo '<p>Huidig totaal (' . (int) KASLEK_TOTAL_YEAR . '): <strong>' . number_format( $cents / 100, 0, ',', '.' ) . '</strong></p>';
+		echo '<p><a class="button button-primary" href="' . esc_url( $url ) . '">Nu herberekenen</a></p></div>';
+	} );
+} );
+
+add_filter( 'manage_post_posts_columns', function ( $columns ) {
+	$new = [];
+	foreach ( $columns as $key => $label ) {
+		if ( $key === 'date' ) $new['kaslek_amount'] = 'Bedrag';
+		$new[ $key ] = $label;
 	}
+	if ( ! isset( $new['kaslek_amount'] ) ) $new['kaslek_amount'] = 'Bedrag';
+	return $new;
+} );
 
-	$ad_id = $idx[ $chosen ][ array_rand( $idx[ $chosen ] ) ];
+add_action( 'manage_post_posts_custom_column', function ( $column, $post_id ) {
+	if ( $column !== 'kaslek_amount' ) return;
+	$cents = (int) get_post_meta( $post_id, 'kaslek_amount_cents', true );
+	echo $cents > 0 ? esc_html( number_format( $cents / 100, 0, ',', '.' ) ) : '—';
+}, 10, 2 );
 
-	if ( $chosen === 'eigen' ) {
-		$impr = (int) get_post_meta( $ad_id, KASLEK_AD_META_IMPR, true );
-		update_post_meta( $ad_id, KASLEK_AD_META_IMPR, $impr + 1 );
-		$url = add_query_arg( [ 'kaslek_click' => $ad_id ], home_url( '/' ) );
-		return sprintf( '<a href="%s" target="_blank" rel="sponsored">%s</a>', esc_url( $url ), get_the_post_thumbnail( $ad_id, 'full' ) );
+add_filter( 'manage_edit-post_sortable_columns', function ( $sortable ) {
+	$sortable['kaslek_amount'] = 'kaslek_amount';
+	return $sortable;
+} );
+
+add_action( 'pre_get_posts', function ( $query ) {
+	if ( ! is_admin() || ! $query->is_main_query() ) return;
+	if ( $query->get( 'orderby' ) === 'kaslek_amount' ) {
+		$query->set( 'meta_key', 'kaslek_amount_cents' );
+		$query->set( 'orderby', 'meta_value_num' );
 	}
+} );
 
-	// Affiliate
-	return '<div class="kaslek-ad-external">' . get_post_meta( $ad_id, KASLEK_AD_META_HTML, true ) . '</div>';
-}
-add_shortcode( 'kaslek_ad', 'kaslek_rotator_shortcode' );
-
-function kaslek_rotator_click_redirect() {
-	if ( isset( $_GET['kaslek_click'] ) ) {
-		$id     = absint( $_GET['kaslek_click'] );
-		$clicks = (int) get_post_meta( $id, KASLEK_AD_META_CLICKS, true );
-		update_post_meta( $id, KASLEK_AD_META_CLICKS, $clicks + 1 );
-		$target = get_post_meta( $id, KASLEK_AD_META_URL, true );
-		if ( $target ) { wp_redirect( esc_url_raw( $target ) ); exit; }
+add_action( 'admin_head-edit.php', function () {
+	$screen = get_current_screen();
+	if ( $screen && $screen->id === 'edit-post' ) {
+		echo '<style>.column-kaslek_amount{width:110px;text-align:right}</style>';
 	}
-}
-add_action( 'template_redirect', 'kaslek_rotator_click_redirect' );
+} );
+
+add_shortcode( 'kaslek_ad', function() {
+	return '<div style="margin:50px 0">'
+	     . '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>'
+	     . '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>'
+	     . '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>'
+	     . '</div>';
+} );
+
+
+
+
+
+
+
+
+
+
 
 
 /* ─────────────────────────────────────────

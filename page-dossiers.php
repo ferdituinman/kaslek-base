@@ -85,7 +85,6 @@ $dossiers = [
 		<?php endif; ?>
 	</div>
 
-	<div class="dossiers-ad"><?php kaslek_get_ad('horizontaal'); ?></div>
 
 </div>
 

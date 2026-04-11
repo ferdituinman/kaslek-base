@@ -213,7 +213,9 @@ if ( count( $trending_posts ) < 5 ) {
 			</a>
 			<?php endif; ?>
 
-			<?php // Posts 2+3: 2 middelgrote cards naast elkaar
+			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+
+<?php // Posts 2+3: 2 middelgrote cards naast elkaar
 			if ( $p1 || $p2 ) : ?>
 			<div class="archive-duo">
 				<?php foreach ( array_filter( [ $p1, $p2 ] ) as $post ) : ?>
@@ -228,7 +230,9 @@ if ( count( $trending_posts ) < 5 ) {
 			</div>
 			<?php endif; ?>
 
-			<?php // Posts 4-6: rij van 3, alleen titel
+			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+
+<?php // Posts 4-6: rij van 3, alleen titel
 			if ( $row2 ) : ?>
 			<div class="scroll-grid archive-text-row">
 				<?php foreach ( $row2 as $post ) : ?>
@@ -241,17 +245,27 @@ if ( count( $trending_posts ) < 5 ) {
 			</div>
 			<?php endif; ?>
 
-			<?php // Posts 7-9: rij van 3 met afbeelding + titel
+			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+			<?php if ( ! $is_mobile ) : ?><div class="kaslek-ad-desktop-row"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+
+<?php // Posts 7-9: rij van 3 met afbeelding + titel
 			if ( $row3 ) :
 				set_query_var( 'archive_row_posts', $row3 );
 				get_template_part( 'template-parts/archive', 'row' );
 			endif; ?>
 
-			<?php // Rest: afwisselend patroon
+			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+			<?php if ( ! $is_mobile ) : ?><div class="kaslek-ad-desktop-row"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+
+<?php // Rest: afwisselend patroon
 			if ( $rest ) :
 				$chunks        = array_chunk( $rest, $is_mobile ? 4 : 11 );
 				$block_size_a  = $is_mobile ? 3 : 5;
-				foreach ( $chunks as $chunk ) :
+				foreach ( $chunks as $chunk_idx => $chunk ) :
+					if ( $chunk_idx > 0 ) : ?>
+					<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+					<?php if ( ! $is_mobile ) : ?><div class="kaslek-ad-desktop-row"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+					<?php endif;
 					$part_a = array_slice( $chunk, 0, $block_size_a );
 					$part_b = array_slice( $chunk, $block_size_a );
 
@@ -327,7 +341,6 @@ if ( count( $trending_posts ) < 5 ) {
 		</div>
 
 		<div class="archive-sidebar">
-			<div class="sidebar-ad"><?php kaslek_get_ad('vierkant'); ?></div>
 			<?php if ( $trending_posts ) : ?>
 			<div class="sidebar-widget">
 				<div class="sidebar-widget-title">Meest gelezen</div>
@@ -341,10 +354,8 @@ if ( count( $trending_posts ) < 5 ) {
 				<?php endforeach; ?>
 			</div>
 			<?php endif; ?>
-			<div class="sidebar-ad"><?php kaslek_get_ad('verticaal'); ?></div>
 		</div>
 	</div>
-	<div class="ad-leaderboard"><?php kaslek_get_ad('horizontaal'); ?></div>
 
 </div>
 
