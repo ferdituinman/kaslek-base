@@ -254,6 +254,14 @@ a:hover { text-decoration: underline; }
 .article-body iframe { max-width: 100%; }
 .article-body pre { overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
 .article-body img { max-width: 100%; height: auto; }
+.article-body figure { max-width: 100% !important; }
+.article-body figure img { max-width: 100%; height: auto; }
+.article-body .wp-caption { max-width: 100% !important; width: auto !important; }
+.article-body .wp-caption img { max-width: 100%; height: auto; display: block; }
+.article-body .wp-caption-text { font-size: 14px; color: var(--text-light); margin-top: 4px; }
+.article-body .wp-block-embed { max-width: 100%; }
+.article-body .wp-block-embed__wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+.article-body .wp-block-embed__wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .article-body blockquote { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-left: none; border-right: none; padding: 20px 0; margin: 28px 0; }
 .article-body blockquote p { font-size: 22px !important; font-weight: 700 !important; color: var(--primary) !important; font-style: italic; margin: 0 !important; }
 
