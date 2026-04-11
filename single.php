@@ -27,10 +27,12 @@
 			</div>
 
 			<?php
-			$content = apply_filters( 'the_content', get_the_content() );
+			$content   = apply_filters( 'the_content', get_the_content() );
 			preg_match( '/<p>(.*?)<\/p>/s', $content, $m );
-			$intro = $m[0] ?? '';
-			$rest  = $intro ? substr( $content, strpos( $content, $intro ) + strlen( $intro ) ) : $content;
+			$intro     = $m[0] ?? '';
+			$intro_pos = $intro ? strpos( $content, $intro ) : false;
+			$pre       = ( $intro && $intro_pos > 0 ) ? substr( $content, 0, $intro_pos ) : '';
+			$rest      = $intro ? substr( $content, $intro_pos + strlen( $intro ) ) : $content;
 			?>
 			<?php if ( $intro ) : ?>
 			<div class="article-inleiding">
@@ -47,6 +49,7 @@
 			<?php endif; ?>
 
 			<div class="article-body">
+				<?php echo $pre; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 				<?php echo $rest; // phpcs:ignore WordPress.Security.EscapeOutput ?>
 			</div>
 

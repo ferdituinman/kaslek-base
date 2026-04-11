@@ -422,43 +422,13 @@ add_action( 'admin_head-edit.php', function () {
 } );
 
 add_action( 'wp_head', function() {
-	if ( is_front_page() ) return;
 	echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>' . "\n";
 } );
 
-add_action( 'wp_footer', function() {
-	if ( ! is_front_page() ) return;
-	?>
-	<script>
-	(function () {
-		var loaded = false;
-		function loadAdsense() {
-			if ( loaded ) return;
-			loaded = true;
-			var s = document.createElement( 'script' );
-			s.async = true;
-			s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612';
-			s.crossOrigin = 'anonymous';
-			document.head.appendChild( s );
-		}
-		[ 'scroll', 'click', 'touchstart', 'keydown' ].forEach( function ( e ) {
-			window.addEventListener( e, loadAdsense, { once: true, passive: true } );
-		} );
-	})();
-	</script>
-	<?php
-} );
-
 add_shortcode( 'kaslek_ad', function() {
-	static $registered = false;
-	if ( ! $registered ) {
-		$registered = true;
-		add_action( 'wp_footer', function() {
-			echo '<script>document.querySelectorAll(".kaslek-ad-sc ins.adsbygoogle").forEach(function(el){(adsbygoogle=window.adsbygoogle||[]).push({});});</script>' . "\n";
-		}, 99 );
-	}
 	return '<div class="kaslek-ad-sc" style="margin:50px 0">'
 	     . '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>'
+	     . '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>'
 	     . '</div>';
 } );
 
