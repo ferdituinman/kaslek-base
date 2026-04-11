@@ -731,7 +731,7 @@ a:hover { text-decoration: underline; }
 /* Sections */
 .over-section { padding: 64px 0; border-bottom: 1px solid var(--border); }
 .over-section-inner { max-width: 760px; padding: 0 48px; }
-.over-section-label { font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); opacity: 0.5; margin-bottom: 16px; }
+.over-section-label { font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); opacity: 0.75; margin-bottom: 16px; }
 .over-section h2 { font-family: var(--font); font-size: 36px; font-weight: 700; color: var(--primary); line-height: 1.15; margin: 0 0 24px; letter-spacing: -0.5px; }
 .over-section p { font-size: 20px; line-height: 32px; color: var(--text); margin-bottom: 16px; }
 .over-lead { font-size: 24px !important; font-weight: 700 !important; line-height: 1.4 !important; color: var(--primary) !important; }
@@ -740,6 +740,7 @@ a:hover { text-decoration: underline; }
 .over-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--border); }
 .over-stat { padding: 40px 48px; border-right: 1px solid var(--border); }
 .over-stat:last-child { border-right: none; }
+.over-stat-eyebrow { font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--primary); opacity: 0.75; margin-bottom: 6px; }
 .over-stat-num { font-family: var(--font); font-size: 48px; font-weight: 700; color: var(--primary); line-height: 1; margin-bottom: 8px; }
 .over-stat-label { font-family: var(--font); font-size: 14px; color: var(--text-light); }
 
@@ -749,7 +750,7 @@ a:hover { text-decoration: underline; }
 /* Pillars */
 .over-pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 40px; }
 .over-pillar { border-top: 3px solid var(--primary); padding-top: 20px; }
-.over-pillar-num { font-family: var(--font); font-size: 36px; font-weight: 700; color: rgba(27,62,95,0.1); line-height: 1; margin-bottom: 12px; }
+.over-pillar-num { font-family: var(--font); font-size: 36px; font-weight: 700; color: rgba(27,62,95,0.6); line-height: 1; margin-bottom: 12px; }
 .over-pillar h3 { font-family: var(--font); font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
 .over-pillar p { font-size: 16px !important; line-height: 26px !important; color: var(--text-light) !important; margin: 0 !important; }
 
@@ -760,7 +761,7 @@ a:hover { text-decoration: underline; }
 .over-principles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border-top: 1px solid var(--border); }
 .over-principle { padding: 32px 32px 32px 0; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding-right: 40px; }
 .over-principles-grid .over-principle:nth-child(even) { padding-left: 40px; padding-right: 0; border-right: none; }
-.over-principle-num { font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--primary); opacity: 0.4; margin-bottom: 12px; }
+.over-principle-num { font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--primary); margin-bottom: 12px; }
 .over-principle h3 { font-family: var(--font); font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
 .over-principle p { font-size: 16px !important; line-height: 26px !important; color: var(--text-light) !important; margin: 0 !important; }
 

@@ -34,6 +34,7 @@ get_header(); ?>
 			<div class="over-stat-label">Opgericht</div>
 		</div>
 		<div class="over-stat">
+			<div class="over-stat-eyebrow">volledig</div>
 			<div class="over-stat-num">&#8734;</div>
 			<div class="over-stat-label">Controleerbaar</div>
 		</div>
