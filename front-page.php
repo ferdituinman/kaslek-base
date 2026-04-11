@@ -34,7 +34,9 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 			<img src="<?php echo esc_url( get_the_post_thumbnail_url( $hero_main, 'large' ) ); ?>"
 			     alt="<?php echo esc_attr( get_the_title( $hero_main ) ); ?>"
 			     style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;max-width:none;"
-			     loading="eager">
+			     loading="eager"
+			     fetchpriority="high"
+			     decoding="async">
 		<?php endif; ?>
 		<div class="hero-overlay"></div>
 		</div>
@@ -160,7 +162,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 
 	<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
-	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 	<!-- MEER TRANSPARANTIE -->
 	<?php
@@ -219,7 +221,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 	</div>
 
 	<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+	<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 	<!-- MEER VERHALEN -->
 	<?php
@@ -276,7 +278,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 			<?php endforeach; ?>
 		</div>
 		<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-		<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+		<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 		<?php if ( $extra_posts ) : ?>
 		<?php if ( wp_is_mobile() ) : ?>
 			<?php foreach ( $extra_posts as $i => $post ) : ?>
@@ -317,7 +319,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 		<?php endif; ?>
 		<?php endif; ?>
 		<?php if ( wp_is_mobile() ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-		<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="9402022262" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+		<?php if ( ! wp_is_mobile() ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 		<?php if ( count( $scroll_posts ) > 3 ) : ?>
 		<div class="scroll-grid">
 			<?php foreach ( array_slice( $scroll_posts, 3 ) as $post ) : ?>

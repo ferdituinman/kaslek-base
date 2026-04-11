@@ -25,6 +25,21 @@ if ( ! isset( $content_width ) ) {
 }
 
 /* ─────────────────────────────────────────
+   BLOAT VERWIJDEREN
+───────────────────────────────────────── */
+add_action( 'init', function() {
+	remove_action( 'wp_head',         'print_emoji_detection_script', 7 );
+	remove_action( 'wp_print_styles', 'print_emoji_styles' );
+	remove_filter( 'the_content_feed', 'wp_staticize_emoji' );
+	remove_filter( 'comment_text_rss', 'wp_staticize_emoji' );
+	remove_filter( 'wp_mail',          'wp_staticize_emoji_for_email' );
+} );
+
+add_action( 'wp_enqueue_scripts', function() {
+	wp_deregister_script( 'wp-embed' );
+}, 100 );
+
+/* ─────────────────────────────────────────
    SCRIPTS & STYLES
 ───────────────────────────────────────── */
 function kaslek_scripts() {
@@ -421,7 +436,15 @@ add_action( 'admin_head-edit.php', function () {
 	}
 } );
 
+// Niet-homepage: AdSense direct in <head> laden als async script
+add_action( 'wp_head', function() {
+	if ( is_front_page() ) return;
+	echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>' . "\n";
+} );
+
+// Homepage: AdSense laden via IntersectionObserver zodra eerste ad-slot in beeld komt
 add_action( 'wp_footer', function() {
+	if ( ! is_front_page() ) return;
 	?>
 	<script>
 	(function () {
@@ -435,9 +458,21 @@ add_action( 'wp_footer', function() {
 			s.crossOrigin = 'anonymous';
 			document.head.appendChild( s );
 		}
-		[ 'scroll', 'click', 'touchstart', 'keydown' ].forEach( function ( e ) {
-			window.addEventListener( e, loadAdsense, { once: true, passive: true } );
-		} );
+		var firstAd = document.querySelector( 'ins.adsbygoogle' );
+		if ( ! firstAd ) return;
+		if ( 'IntersectionObserver' in window ) {
+			var observer = new IntersectionObserver( function( entries ) {
+				if ( entries[0].isIntersecting ) {
+					loadAdsense();
+					observer.disconnect();
+				}
+			}, { rootMargin: '200px 0px' } );
+			observer.observe( firstAd );
+		} else {
+			[ 'scroll', 'click', 'touchstart' ].forEach( function( e ) {
+				window.addEventListener( e, loadAdsense, { once: true, passive: true } );
+			} );
+		}
 	})();
 	</script>
 	<?php
