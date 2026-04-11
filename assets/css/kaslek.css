@@ -39,6 +39,7 @@ body {
   background: #c8d4dc;
   margin: 0;
   padding: 32px 16px;
+  overflow-x: hidden;
 }
 h1 { font-family: var(--font); font-weight: 700; color: var(--primary); line-height: 1.15; }
 h2 { font-family: var(--font); font-size: 24px; font-weight: 700; line-height: 1.2; color: var(--primary); margin-bottom: 0.8em; }
@@ -242,7 +243,7 @@ a:hover { text-decoration: underline; }
 .vogelvlucht li { font-family: var(--font); font-size: 20px; color: var(--text); line-height: 30px; font-weight: 500; margin-bottom: 4px; }
 
 /* Artikel body */
-.article-body { padding: 24px 32px 32px; }
+.article-body { padding: 24px 32px 32px; overflow-wrap: break-word; word-break: break-word; }
 .article-body p { font-family: var(--font); font-size: 20px; font-weight: 400; line-height: 30px; color: var(--text); margin-bottom: 20px; }
 .article-body h2 { font-family: var(--font); font-size: 28px; font-weight: 700; color: var(--primary); margin: 32px 0 12px; line-height: 1.2; }
 .article-body h3, .article-body h4 { font-family: var(--font); font-size: 24px; font-weight: 700; color: var(--primary); margin: 24px 0 10px; line-height: 1.2; }
@@ -694,9 +695,10 @@ a:hover { text-decoration: underline; }
   .article-inleiding { padding: 0 16px 20px; }
   .bronnen { padding: 14px 16px; }
   .nieuwstip { padding: 16px; }
-  .meer-verhalen { padding: 16px 0; }
-  .meer-verhalen-header { padding: 0 16px 12px; }
+  .meer-verhalen { padding: 16px; }
+  .meer-verhalen-header { padding: 0 0 12px; }
   .meer-verhalen-grid { grid-template-columns: 1fr; gap: 2px; }
+  .mv-card-content { padding: 14px 16px; }
   .site-footer { padding: 24px 16px 32px; }
   .footer-grid { grid-template-columns: 1fr; gap: 20px; }
   .footer-bottom { flex-direction: column; gap: 4px; align-items: flex-start; }

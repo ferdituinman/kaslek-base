@@ -95,7 +95,7 @@
 	</div>
 
 	<div class="teller">
-		Dit jaar <strong>&euro; <?php echo $kaslek_total_formatted; ?></strong> aan overheidsuitgaven blootgelegd.
+		Dit jaar <strong>&euro; <?php echo $kaslek_total_formatted; ?></strong> aan overheidsuitgaven blootgelegd
 	</div>
 
 	<nav class="site-nav" aria-label="Primaire navigatie">

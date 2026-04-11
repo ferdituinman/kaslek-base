@@ -190,7 +190,7 @@ function kaslek_counter_script() {
 			var duration = 1500;
 			var start    = null;
 			function fmt(n) {
-				return Math.round(n).toLocaleString('nl-NL');
+				return Math.round(n).toLocaleString('nl-NL').replace(/\./g, '');
 			}
 			function step(ts) {
 				if (!start) start = ts;
