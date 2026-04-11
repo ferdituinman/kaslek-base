@@ -1,14 +1,7 @@
-<?php if ( wp_is_mobile() ) : ?>
 <div style="margin:50px 0">
 	<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
 	<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
-<?php else : ?>
-<div style="margin:50px 0">
-	<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
-	<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-</div>
-<?php endif; ?>
 
 <footer class="site-footer">
 	<div class="footer-grid">
