@@ -14,7 +14,7 @@
 <div class="mobile-topbar" aria-hidden="true">
 	<?php $kaslek_total_formatted = do_shortcode( '[kaslek_total]' ); ?>
 	<div class="mobile-topbar-counter">
-		Dit jaar <strong>&euro; <?php echo $kaslek_total_formatted; ?></strong> blootgelegd
+		Dit jaar <strong>&euro; <?php echo $kaslek_total_formatted; ?></strong> blootgelegd.
 	</div>
 	<button class="mobile-hamburger" aria-label="Menu openen" aria-expanded="false" aria-controls="mobile-menu">
 		<span class="mobile-hamburger-bar"></span>
@@ -95,7 +95,7 @@
 	</div>
 
 	<div class="teller">
-		Dit jaar <strong>&euro; <?php echo $kaslek_total_formatted; ?></strong> aan overheidsuitgaven blootgelegd
+		Dit jaar <strong>&euro; <?php echo $kaslek_total_formatted; ?></strong> aan overheidsuitgaven blootgelegd.
 	</div>
 
 	<nav class="site-nav" aria-label="Primaire navigatie">
