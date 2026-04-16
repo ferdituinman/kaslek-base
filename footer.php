@@ -1,4 +1,4 @@
-<div style="margin:50px 0">
+<div style="margin:50px 0;display:flex;justify-content:center">
 	<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
 	<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
