@@ -356,6 +356,7 @@ if ( count( $trending_posts ) < 5 ) {
 				<?php endforeach; ?>
 			</div>
 			<?php endif; ?>
+			<!-- ads rotator -->
 		</div>
 	</div>
 

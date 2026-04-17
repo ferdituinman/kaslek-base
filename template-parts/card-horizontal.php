@@ -9,6 +9,6 @@
 	</a>
 	<div class="card-horizontal-content">
 		<?php if ( $c ) echo '<a href="' . esc_url( get_category_link( $c[0]->term_id ) ) . '" class="cat-label ' . esc_attr($c[0]->slug) . '">' . esc_html($c[0]->name) . '</a>'; ?>
-		<a href="<?php the_permalink(); ?>" class="card-horizontal-title"><?php the_title(); ?></a>
+		<a href="<?php the_permalink(); ?>" class="card-horizontal-title"><?php echo esc_html( get_the_title() ); ?></a>
 	</div>
 </article>

@@ -129,18 +129,23 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 				</div>
 				<div class="col-featured-title"><?php echo esc_html( get_the_title( $kol_featured ) ); ?></div>
 			</a>
-			<?php foreach ( $kol_rest as $item ) : ?>
-			<a href="<?php echo esc_url( get_permalink( $item ) ); ?>" class="col-item" style="text-decoration:none;">
-				<?php if ( has_post_thumbnail( $item ) ) : ?>
-				<div style="width:96px;height:64px;flex-shrink:0;overflow:hidden;position:relative;background:#1B3E5F;">
-					<img src="<?php echo esc_url( get_the_post_thumbnail_url( $item, 'medium_large' ) ); ?>"
-					     alt="<?php echo esc_attr( get_the_title( $item ) ); ?>"
-					     style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;max-width:none;">
-				</div>
-				<?php endif; ?>
-				<div class="col-item-title"><?php echo esc_html( get_the_title( $item ) ); ?></div>
-			</a>
-			<?php endforeach; ?>
+			<?php if ( $kol['cat'] === 'spraakmakend' ) : ?>
+				<!-- ads rotator -->
+			<?php endif; ?>
+			<?php if ( $kol['cat'] !== 'spraakmakend' ) : ?>
+				<?php foreach ( $kol_rest as $item ) : ?>
+				<a href="<?php echo esc_url( get_permalink( $item ) ); ?>" class="col-item" style="text-decoration:none;">
+					<?php if ( has_post_thumbnail( $item ) ) : ?>
+					<div style="width:96px;height:64px;flex-shrink:0;overflow:hidden;position:relative;background:#1B3E5F;">
+						<img src="<?php echo esc_url( get_the_post_thumbnail_url( $item, 'medium_large' ) ); ?>"
+						     alt="<?php echo esc_attr( get_the_title( $item ) ); ?>"
+						     style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;max-width:none;">
+					</div>
+					<?php endif; ?>
+					<div class="col-item-title"><?php echo esc_html( get_the_title( $item ) ); ?></div>
+				</a>
+				<?php endforeach; ?>
+			<?php endif; ?>
 		</div>
 		<?php endforeach; ?>
 	</div>

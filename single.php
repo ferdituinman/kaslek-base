@@ -18,7 +18,7 @@
 			<?php endif; ?>
 
 			<div class="article-header">
-				<h1 class="article-title"><?php the_title(); ?></h1>
+				<h1 class="article-title"><?php echo esc_html( get_the_title() ); ?></h1>
 				<div class="article-meta">
 					<span class="meta-author"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><?php the_author(); ?></span>
 					<span class="meta-date"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><?php echo get_the_date(); ?></span>
@@ -104,7 +104,8 @@
 </script>
 			</div>
 
-			<?php if ( wp_is_mobile() ) : ?>
+			<!-- ads rotator -->
+			<?php if ( false ) : ?>
 			<div class="kaslek-ad-mobile-share">
 				<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
 				<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
