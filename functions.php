@@ -436,10 +436,47 @@ add_action( 'admin_head-edit.php', function () {
 	}
 } );
 
-// AdSense verificatie en script in <head>
+// Niet-homepage: AdSense direct in <head>
 add_action( 'wp_head', function() {
+	if ( is_front_page() ) return;
 	echo '<meta name="google-adsense-account" content="ca-pub-6115912536653612">' . "\n";
 	echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>' . "\n";
+} );
+
+// Homepage: AdSense laden via IntersectionObserver zodra eerste ad-slot in beeld komt
+add_action( 'wp_footer', function() {
+	if ( ! is_front_page() ) return;
+	?>
+	<script>
+	(function () {
+		var loaded = false;
+		function loadAdsense() {
+			if ( loaded ) return;
+			loaded = true;
+			var s = document.createElement( 'script' );
+			s.async = true;
+			s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612';
+			s.crossOrigin = 'anonymous';
+			document.head.appendChild( s );
+		}
+		var firstAd = document.querySelector( 'ins.adsbygoogle' );
+		if ( ! firstAd ) return;
+		if ( 'IntersectionObserver' in window ) {
+			var observer = new IntersectionObserver( function( entries ) {
+				if ( entries[0].isIntersecting ) {
+					loadAdsense();
+					observer.disconnect();
+				}
+			}, { rootMargin: '200px 0px' } );
+			observer.observe( firstAd );
+		} else {
+			[ 'scroll', 'click', 'touchstart' ].forEach( function( e ) {
+				window.addEventListener( e, loadAdsense, { once: true, passive: true } );
+			} );
+		}
+	})();
+	</script>
+	<?php
 } );
 
 
