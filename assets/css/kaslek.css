@@ -578,6 +578,10 @@ a:hover { text-decoration: underline; }
 .kaslek-ad-desktop-bottom,
 .kaslek-ad-between,
 .kaslek-ad-desktop-row { margin: 50px 0; display: flex; justify-content: center; }
+.kaslek-ad-mobile-share > ins,
+.kaslek-ad-desktop-bottom > ins,
+.kaslek-ad-between > ins,
+.kaslek-ad-desktop-row > ins { width: 100%; }
 
 /* Mobiele footer */
 .footer-social-mobile-block { display: none; }
