@@ -104,13 +104,9 @@
 </script>
 			</div>
 
-			<!-- ads rotator -->
-			<?php if ( wp_is_mobile() ) : ?>
-			<div class="kaslek-ad-mobile-share">
-				<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
-				<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+			<div style="margin:25px 0 50px;padding:0 32px;">
+				<?php echo KasLek_Ads_Rotator::render_shortcode(); ?>
 			</div>
-			<?php endif; ?>
 
 			</div><!-- /article-white-block -->
 

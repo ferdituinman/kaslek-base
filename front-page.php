@@ -9,7 +9,6 @@ $shown_ids = [];
 $hero_q = new WP_Query([
 	'posts_per_page' => 5,
 	'post_status'    => 'publish',
-	'post__not_in'   => [1080],
 	'orderby'        => 'date',
 	'order'          => 'DESC',
 ]);
@@ -97,7 +96,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 		];
 		foreach ( $kolommen as $kol ) :
 			$kol_q = new WP_Query([
-				'posts_per_page' => 3,
+				'posts_per_page' => $kol['cat'] === 'spraakmakend' ? 1 : 4,
 				'post_status'    => 'publish',
 				'category_name'  => $kol['cat'],
 				'post__not_in'   => $shown_ids,
@@ -129,7 +128,11 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 				</div>
 				<div class="col-featured-title"><?php echo esc_html( get_the_title( $kol_featured ) ); ?></div>
 			</a>
-			<!-- ads rotator -->
+			<?php if ( $kol['cat'] === 'spraakmakend' ) : ?>
+			<div class="rotator-col-wrap" style="margin-top:16px;">
+				<?php echo KasLek_Ads_Rotator::render_shortcode(); ?>
+			</div>
+			<?php else : ?>
 			<?php foreach ( $kol_rest as $item ) : ?>
 			<a href="<?php echo esc_url( get_permalink( $item ) ); ?>" class="col-item" style="text-decoration:none;">
 				<?php if ( has_post_thumbnail( $item ) ) : ?>
@@ -142,6 +145,7 @@ foreach ( $hero_stack as $s ) $shown_ids[] = $s->ID;
 				<div class="col-item-title"><?php echo esc_html( get_the_title( $item ) ); ?></div>
 			</a>
 			<?php endforeach; ?>
+			<?php endif; ?>
 		</div>
 		<?php endforeach; ?>
 	</div>

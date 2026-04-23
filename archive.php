@@ -155,8 +155,6 @@ if ( count( $trending_posts ) < 5 ) {
 	</a>
 	<?php endif; ?>
 
-	<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-
 	<!-- HEADER -->
 	<?php if ( ! $is_mobile ) : ?>
 	<div class="archive-hero">
@@ -215,8 +213,6 @@ if ( count( $trending_posts ) < 5 ) {
 			</a>
 			<?php endif; ?>
 
-			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-
 <?php // Posts 2+3: 2 middelgrote cards naast elkaar
 			if ( $p1 || $p2 ) : ?>
 			<div class="archive-duo">
@@ -232,7 +228,10 @@ if ( count( $trending_posts ) < 5 ) {
 			</div>
 			<?php endif; ?>
 
-			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
+			<div style="margin:50px 0;">
+				<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>
+				<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+			</div>
 
 <?php // Posts 4-6: rij van 3, alleen titel
 			if ( $row2 ) : ?>
@@ -247,17 +246,11 @@ if ( count( $trending_posts ) < 5 ) {
 			</div>
 			<?php endif; ?>
 
-			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-			<?php if ( ! $is_mobile ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-
 <?php // Posts 7-9: rij van 3 met afbeelding + titel
 			if ( $row3 ) :
 				set_query_var( 'archive_row_posts', $row3 );
 				get_template_part( 'template-parts/archive', 'row' );
 			endif; ?>
-
-			<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-			<?php if ( ! $is_mobile ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 
 <?php // Rest: afwisselend patroon
 			if ( $rest ) :
@@ -265,8 +258,6 @@ if ( count( $trending_posts ) < 5 ) {
 				$block_size_a  = $is_mobile ? 3 : 5;
 				foreach ( $chunks as $chunk_idx => $chunk ) :
 					if ( $chunk_idx > 0 ) : ?>
-					<?php if ( $is_mobile ) : ?><div class="kaslek-ad-between"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
-					<?php if ( ! $is_mobile ) : ?><div class="kaslek-ad-desktop-row"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div><?php endif; ?>
 					<?php endif;
 					$part_a = array_slice( $chunk, 0, $block_size_a );
 					$part_b = array_slice( $chunk, $block_size_a );
@@ -356,7 +347,9 @@ if ( count( $trending_posts ) < 5 ) {
 				<?php endforeach; ?>
 			</div>
 			<?php endif; ?>
-			<!-- ads rotator -->
+			<div style="margin:50px 0;">
+				<?php echo KasLek_Ads_Rotator::render_shortcode(); ?>
+			</div>
 		</div>
 	</div>
 
