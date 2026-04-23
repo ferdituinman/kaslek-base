@@ -364,6 +364,22 @@ add_shortcode( 'kaslek_total', function ( $atts ) {
 	);
 } );
 
+add_shortcode( 'kaslek_ad', function() {
+	ob_start();
+	?>
+	<div class="kaslek-ad-shortcode">
+		<ins class="adsbygoogle"
+		     style="display:block;width:100%"
+		     data-ad-client="ca-pub-6115912536653612"
+		     data-ad-slot="4772512111"
+		     data-ad-format="auto"
+		     data-full-width-responsive="true"></ins>
+		<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+	</div>
+	<?php
+	return ob_get_clean();
+} );
+
 add_action( 'rest_api_init', function () {
 	register_rest_route( 'kaslek/v1', '/total', [
 		'methods'             => 'GET',
@@ -480,12 +496,6 @@ add_action( 'wp_footer', function() {
 } );
 
 
-add_shortcode( 'kaslek_ad', function() {
-	return '<div class="kaslek-ad-sc" style="margin:50px 0">'
-	     . '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>'
-	     . '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>'
-	     . '</div>';
-} );
 
 
 
@@ -719,3 +729,227 @@ add_filter( 'the_content', function( $content ) {
 	}
 	return $content;
 } );
+
+
+/* ─────────────────────────────────────────
+   ADS ROTATOR
+───────────────────────────────────────── */
+if ( ! class_exists( 'KasLek_Ads_Rotator' ) ) {
+final class KasLek_Ads_Rotator {
+	const CPT              = 'kaslek_ad';
+	const META_CATEGORY    = '_kaslek_ad_category';
+	const META_URL         = '_kaslek_ad_url';
+	const META_HTML        = '_kaslek_ad_html';
+	const META_IMPRESSIONS = '_kaslek_ad_impressions';
+	const META_CLICKS      = '_kaslek_ad_clicks';
+
+	public static function init() {
+		self::register_cpt();
+		add_action( 'add_meta_boxes', [ __CLASS__, 'add_metaboxes' ] );
+		add_action( 'save_post_' . self::CPT, [ __CLASS__, 'save_ad_metabox' ], 10, 2 );
+		add_action( 'admin_footer', [ __CLASS__, 'admin_footer_js' ] );
+		add_action( 'template_redirect', [ __CLASS__, 'handle_click_redirect' ] );
+		add_filter( 'manage_edit-' . self::CPT . '_columns', [ __CLASS__, 'admin_columns' ] );
+		add_action( 'manage_' . self::CPT . '_posts_custom_column', [ __CLASS__, 'admin_column_values' ], 10, 2 );
+		add_action( 'admin_menu', [ __CLASS__, 'add_report_menu' ] );
+	}
+
+	public static function register_cpt() {
+		register_post_type( self::CPT, [
+			'labels' => [
+				'name'          => 'Ads',
+				'singular_name' => 'Ad',
+				'menu_name'     => 'Ads Manager',
+				'all_items'     => 'Alle Ads',
+				'add_new'       => 'Nieuwe Ad',
+				'add_new_item'  => 'Nieuwe Ad toevoegen',
+			],
+			'public'          => false,
+			'show_ui'         => true,
+			'show_in_menu'    => true,
+			'menu_position'   => 2,
+			'menu_icon'       => 'dashicons-megaphone',
+			'supports'        => [ 'title', 'thumbnail', 'author' ],
+			'capability_type' => 'post',
+			'map_meta_cap'    => true,
+			'hierarchical'    => false,
+			'query_var'       => true,
+		] );
+	}
+
+	public static function add_metaboxes() {
+		add_meta_box( 'kaslek_settings', 'Ad Instellingen', [ __CLASS__, 'render_metabox' ], self::CPT, 'normal', 'high' );
+	}
+
+	public static function render_metabox( $post ) {
+		wp_nonce_field( 'kaslek_save', 'kaslek_nonce' );
+		$cat  = get_post_meta( $post->ID, self::META_CATEGORY, true ) ?: 'eigen';
+		$url  = get_post_meta( $post->ID, self::META_URL, true );
+		$html = get_post_meta( $post->ID, self::META_HTML, true );
+		?>
+		<div style="margin-bottom:15px;">
+			<label><strong>Type Ad:</strong></label><br>
+			<select name="kaslek_cat" id="kaslek_cat" style="width:100%; max-width:400px;">
+				<option value="eigen"     <?php selected( $cat, 'eigen' ); ?>>Eigen Ad (Afbeelding + Link)</option>
+				<option value="affiliate" <?php selected( $cat, 'affiliate' ); ?>>Affiliate (HTML/Bol.com)</option>
+			</select>
+		</div>
+		<div id="section_url" style="margin-bottom:15px;">
+			<label><strong>Doel URL:</strong></label><br>
+			<input type="url" name="kaslek_url" value="<?php echo esc_attr( $url ); ?>" style="width:100%">
+		</div>
+		<div id="section_html">
+			<label><strong>HTML Code:</strong></label><br>
+			<textarea name="kaslek_html" style="width:100%;height:150px;font-family:monospace;"><?php echo esc_textarea( $html ); ?></textarea>
+		</div>
+		<?php
+	}
+
+	public static function admin_footer_js() {
+		$screen = get_current_screen();
+		if ( ! $screen || $screen->post_type !== self::CPT ) return;
+		?>
+		<script>jQuery(document).ready(function($){
+			function t(){
+				var v=$('#kaslek_cat').val();
+				if(v==='eigen'){$('#section_url').show();$('#section_html').hide();}
+				else{$('#section_url').hide();$('#section_html').show();}
+			}
+			$('#kaslek_cat').change(t); t();
+		});</script>
+		<?php
+	}
+
+	public static function save_ad_metabox( $post_id ) {
+		if ( ! isset( $_POST['kaslek_nonce'] ) || ! wp_verify_nonce( $_POST['kaslek_nonce'], 'kaslek_save' ) ) return;
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+		if ( isset( $_POST['kaslek_cat'] ) )  update_post_meta( $post_id, self::META_CATEGORY, sanitize_text_field( $_POST['kaslek_cat'] ) );
+		if ( isset( $_POST['kaslek_url'] ) )  update_post_meta( $post_id, self::META_URL, esc_url_raw( $_POST['kaslek_url'] ) );
+		if ( isset( $_POST['kaslek_html'] ) ) update_post_meta( $post_id, self::META_HTML, $_POST['kaslek_html'] );
+	}
+
+	public static function render_shortcode() {
+		$ads = get_posts( [ 'post_type' => self::CPT, 'post_status' => 'publish', 'posts_per_page' => -1 ] );
+
+		$idx = [ 'eigen' => [], 'affiliate' => [] ];
+		foreach ( $ads as $ad ) {
+			$c = get_post_meta( $ad->ID, self::META_CATEGORY, true ) ?: 'eigen';
+			if ( isset( $idx[ $c ] ) ) $idx[ $c ][] = $ad->ID;
+		}
+
+		$avail = [];
+		foreach ( [ 'eigen' => 50, 'affiliate' => 50 ] as $k => $w ) {
+			if ( ! empty( $idx[ $k ] ) ) $avail[ $k ] = $w;
+		}
+		if ( ! $avail ) return '';
+
+		$state  = get_option( 'kaslek_rr_state', [ 'eigen' => 0, 'affiliate' => 0 ] );
+		$chosen = array_key_first( $avail );
+		$max    = -999999;
+		foreach ( $avail as $k => $w ) {
+			$state[ $k ] = ( isset( $state[ $k ] ) ? $state[ $k ] : 0 ) + $w;
+			if ( $state[ $k ] > $max ) { $max = $state[ $k ]; $chosen = $k; }
+		}
+		$state[ $chosen ] -= 100;
+		update_option( 'kaslek_rr_state', $state );
+
+		$ad_id = $idx[ $chosen ][ array_rand( $idx[ $chosen ] ) ];
+
+		if ( $chosen === 'eigen' ) {
+			$current_impr = (int) get_post_meta( $ad_id, self::META_IMPRESSIONS, true );
+			update_post_meta( $ad_id, self::META_IMPRESSIONS, $current_impr + 1 );
+			$url = add_query_arg( [ 'kaslek_click' => $ad_id ], home_url( '/' ) );
+			return sprintf( '<a href="%s" target="_blank" rel="sponsored">%s</a>', esc_url( $url ), get_the_post_thumbnail( $ad_id, 'full' ) );
+		}
+
+		// Affiliate
+		$raw_html = get_post_meta( $ad_id, self::META_HTML, true );
+		preg_match_all( '/<script\b[^>]*>(.*?)<\/script>/is', $raw_html, $inline_matches );
+		$ins_only = preg_replace( '/<script\b[^>]*>.*?<\/script>/is', '', $raw_html );
+		foreach ( $inline_matches[1] as $js ) {
+			$js = trim( $js );
+			if ( $js ) {
+				add_action( 'wp_footer', function() use ( $js ) {
+					echo '<script>' . $js . '</script>' . "\n";
+				}, 5 );
+			}
+		}
+		return '<div class="kaslek-ad-external">' . $ins_only . '</div>';
+	}
+
+	public static function handle_click_redirect() {
+		if ( isset( $_GET['kaslek_click'] ) ) {
+			$id             = absint( $_GET['kaslek_click'] );
+			$current_clicks = (int) get_post_meta( $id, self::META_CLICKS, true );
+			update_post_meta( $id, self::META_CLICKS, $current_clicks + 1 );
+			$target = get_post_meta( $id, self::META_URL, true );
+			if ( $target ) { wp_redirect( esc_url_raw( $target ) ); exit; }
+		}
+	}
+
+	public static function admin_columns( $cols ) {
+		return [
+			'cb'      => $cols['cb'],
+			'title'   => $cols['title'],
+			'ad_type' => 'Type',
+			'stats'   => 'Impressies / Kliks',
+			'author'  => $cols['author'],
+			'date'    => $cols['date'],
+		];
+	}
+
+	public static function admin_column_values( $col, $post_id ) {
+		if ( $col === 'ad_type' ) {
+			echo esc_html( ucfirst( get_post_meta( $post_id, self::META_CATEGORY, true ) ?: 'eigen' ) );
+		}
+		if ( $col === 'stats' ) {
+			$impr  = (int) get_post_meta( $post_id, self::META_IMPRESSIONS, true );
+			$click = (int) get_post_meta( $post_id, self::META_CLICKS, true );
+			echo '<strong>' . $impr . '</strong> / <strong>' . $click . '</strong>';
+		}
+	}
+
+	public static function add_report_menu() {
+		add_submenu_page( 'edit.php?post_type=' . self::CPT, 'Rapportage', 'Rapportage', 'edit_posts', 'kaslek-report', [ __CLASS__, 'render_report_page' ] );
+	}
+
+	public static function render_report_page() {
+		$ads   = get_posts( [ 'post_type' => self::CPT, 'posts_per_page' => -1 ] );
+		$stats = [];
+		foreach ( $ads as $ad ) {
+			$author = get_the_author_meta( 'display_name', $ad->post_author );
+			if ( ! isset( $stats[ $author ] ) ) $stats[ $author ] = [ 'impr' => 0, 'click' => 0 ];
+			$stats[ $author ]['impr']  += (int) get_post_meta( $ad->ID, self::META_IMPRESSIONS, true );
+			$stats[ $author ]['click'] += (int) get_post_meta( $ad->ID, self::META_CLICKS, true );
+		}
+		?>
+		<div class="wrap">
+			<h1>Rapportage per auteur (Eigen Ads)</h1>
+			<table class="widefat striped" style="margin-top:20px;">
+				<thead>
+					<tr>
+						<th>Auteur</th>
+						<th>Totaal Impressies</th>
+						<th>Totaal Kliks</th>
+						<th>CTR</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ( $stats as $name => $d ) :
+					$ctr = $d['impr'] > 0 ? round( ( $d['click'] / $d['impr'] ) * 100, 2 ) : 0; ?>
+					<tr>
+						<td><strong><?php echo esc_html( $name ); ?></strong></td>
+						<td><?php echo (int) $d['impr']; ?></td>
+						<td><?php echo (int) $d['click']; ?></td>
+						<td><?php echo esc_html( $ctr ); ?>%</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+}
+
+}
+add_action( 'init', [ KasLek_Ads_Rotator::class, 'init' ] );
