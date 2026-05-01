@@ -1701,7 +1701,7 @@ function ferdi_execute_autoque_logic( $post_id ) {
 			$new_time   = strtotime( $target_day . ' 08:00', $new_time + $offset ) - $offset + rand( 0, 900 );
 		}
 		if ( ferdi_count_posts_on_date( $new_time ) < $max_per_day ) break;
-		$new_time = strtotime( '+1 day 08:00', gmdate( 'Y-m-d', $new_time + $offset ) . ' 00:00:00' ) - $offset + rand( 0, 900 );
+		$new_time = strtotime( '+1 day 08:00', $new_time + $offset ) - $offset + rand( 0, 900 );
 		$attempts++;
 	}
 
@@ -1942,7 +1942,7 @@ add_action( 'manage_post_posts_custom_column', function( $col, $id ) {
    AIVD INSTELLINGEN
 ───────────────────────────────────────── */
 add_action( 'admin_menu', function() {
-	add_menu_page( 'AIVD', 'AIVD', 'manage_options', 'aivd', 'aivd_settings_page', 'dashicons-shield', 2 );
+	add_menu_page( 'AIVD', 'AIVD', 'manage_options', 'aivd', 'aivd_settings_page', 'dashicons-shield', 3 );
 	add_submenu_page( 'aivd', 'Instellingen', 'Instellingen', 'manage_options', 'aivd', 'aivd_settings_page' );
 } );
 
