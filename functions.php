@@ -2025,6 +2025,7 @@ function aivd_settings_page() {
 							<input type="checkbox" name="aivd_check_factcheck_score" value="1" <?php checked( $factcheck, '1' ); ?>>
 							<span class="kaslek-toggle-slider"></span>
 						</label>
+						<p class="description" style="margin-top:8px;">Aan: alleen drafts met een factcheck-score ≥ drempel (zie hieronder) worden meegenomen voor autopost. Geen score of te laag → wordt overgeslagen.</p>
 					</td>
 				</tr>
 				<tr>
