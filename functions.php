@@ -268,8 +268,41 @@ function kaslek_dossier_canonical( $canonical ) {
 	}
 	return $canonical;
 }
+add_action( 'save_post', function( $post_id, $post ) {
+	if ( ! isset( $post->post_type ) || $post->post_type !== 'post' ) return;
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) return;
+	if ( ! in_array( get_post_status( $post_id ), [ 'publish', 'future', 'draft', 'pending', 'private' ], true ) ) return;
+
+	$yoast_key = '_yoast_wpseo_metadesc';
+	$existing  = get_post_meta( $post_id, $yoast_key, true );
+	if ( is_string( $existing ) && trim( $existing ) !== '' ) return;
+
+	$excerpt = get_post_field( 'post_excerpt', $post_id );
+	if ( ! is_string( $excerpt ) || trim( $excerpt ) === '' ) return;
+
+	$text = wp_strip_all_tags( strip_shortcodes( $excerpt ) );
+	$text = html_entity_decode( $text, ENT_QUOTES, get_bloginfo( 'charset' ) );
+	$text = preg_replace( '/\s+/u', ' ', trim( $text ) );
+
+	if ( mb_strlen( $text ) > 145 ) {
+		$text = rtrim( mb_substr( $text, 0, 145 ), " \t\n\r\0\x0B,.;:!?)\"]" ) . '…';
+	}
+
+	update_post_meta( $post_id, $yoast_key, $text );
+}, 10, 2 );
+
 add_filter( 'wpseo_canonical', 'kaslek_dossier_canonical' );
 add_filter( 'wpseo_opengraph_url', 'kaslek_dossier_canonical' );
+
+add_filter( 'wpseo_twitter_image', function( $image ) {
+	$post_id = get_the_ID();
+	if ( ! $post_id ) return $image;
+	$thumbnail_id = get_post_thumbnail_id( $post_id );
+	if ( ! $thumbnail_id ) return $image;
+	$src = wp_get_attachment_image_src( $thumbnail_id, 'large' );
+	return $src ? $src[0] : $image;
+} );
 
 /* ─────────────────────────────────────────
    KASLEK TOTAL
@@ -452,6 +485,57 @@ add_action( 'admin_head-edit.php', function () {
 	}
 } );
 
+add_action( 'wp_head', function() {
+	echo '<meta name="referrer" content="no-referrer">' . "\n";
+	echo '<meta name="theme-color" content="#1B3E5F">' . "\n";
+} );
+
+// gtag: laadt na eerste interactie of na 5 seconden
+add_action( 'wp_footer', function() {
+	?>
+	<script>
+	(function () {
+		var loaded = false;
+		var passiveOpts = { passive: true, once: true };
+
+		function loadGtag() {
+			if ( loaded ) return;
+			loaded = true;
+			removeListeners();
+			var s = document.createElement( 'script' );
+			s.async = true;
+			s.src = 'https://www.googletagmanager.com/gtag/js?id=G-1DZQ6K8M6V';
+			document.head.appendChild( s );
+			s.onload = function () {
+				window.dataLayer = window.dataLayer || [];
+				function gtag(){ dataLayer.push( arguments ); }
+				gtag( 'js', new Date() );
+				gtag( 'config', 'G-1DZQ6K8M6V' );
+			};
+		}
+
+		function removeListeners() {
+			window.removeEventListener( 'scroll',      loadGtag, passiveOpts );
+			window.removeEventListener( 'pointerdown', loadGtag, passiveOpts );
+			window.removeEventListener( 'touchstart',  loadGtag, passiveOpts );
+			window.removeEventListener( 'keydown',     loadGtag, false );
+		}
+
+		window.addEventListener( 'scroll',      loadGtag, passiveOpts );
+		window.addEventListener( 'pointerdown', loadGtag, passiveOpts );
+		window.addEventListener( 'touchstart',  loadGtag, passiveOpts );
+		window.addEventListener( 'keydown',     loadGtag, { once: true } );
+		window.setTimeout( loadGtag, 5000 );
+	})();
+	</script>
+	<?php
+} );
+
+add_filter( 'wp_robots', function( array $robots ): array {
+	$robots['max-image-preview'] = 'large';
+	return $robots;
+}, 999 );
+
 // Niet-homepage: AdSense direct in <head>
 add_action( 'wp_head', function() {
 	if ( is_front_page() ) return;
@@ -507,6 +591,35 @@ add_action( 'wp_footer', function() {
 
 
 
+
+/* ─────────────────────────────────────────
+   IMAGE UPLOAD LIMIET
+───────────────────────────────────────── */
+add_filter( 'wp_generate_attachment_metadata', 'ft_limit_upload_width_1280', 10, 2 );
+function ft_limit_upload_width_1280( $metadata, $attachment_id ) {
+	$mime = get_post_mime_type( $attachment_id );
+	if ( strpos( $mime, 'image/' ) !== 0 ) return $metadata;
+
+	$file = get_attached_file( $attachment_id );
+	if ( ! $file || ! file_exists( $file ) ) return $metadata;
+
+	$editor = wp_get_image_editor( $file );
+	if ( is_wp_error( $editor ) ) return $metadata;
+
+	$size = $editor->get_size();
+	if ( empty( $size['width'] ) || $size['width'] <= 1280 ) return $metadata;
+
+	$editor->resize( 1280, null );
+	$saved = $editor->save( $file );
+
+	if ( ! is_wp_error( $saved ) ) {
+		if ( isset( $saved['width'] ) )    $metadata['width']    = $saved['width'];
+		if ( isset( $saved['height'] ) )   $metadata['height']   = $saved['height'];
+		if ( isset( $saved['filesize'] ) ) $metadata['filesize'] = $saved['filesize'];
+	}
+
+	return $metadata;
+}
 
 /* ─────────────────────────────────────────
    FALLBACK NAV
@@ -730,6 +843,105 @@ add_filter( 'the_content', function( $content ) {
 	return $content;
 } );
 
+function ft_replace_emdash_with_dash( $content ) {
+	return str_replace( "\u{2014}", '-', $content );
+}
+add_filter( 'the_content',  'ft_replace_emdash_with_dash' );
+add_filter( 'widget_text',  'ft_replace_emdash_with_dash' );
+
+
+/* ─────────────────────────────────────────
+   TELEGRAM
+───────────────────────────────────────── */
+if ( ! defined( 'TELEGRAM_BOT_TOKEN' ) )     define( 'TELEGRAM_BOT_TOKEN',     '8592703253:AAGoVKMjmWAtx_0yE-wCLKzslj9NIzYKfAs' );
+if ( ! defined( 'TELEGRAM_CHAT_ID' ) )       define( 'TELEGRAM_CHAT_ID',       '-1003153108932' );
+if ( ! defined( 'TELEGRAM_SENT_META_KEY' ) ) define( 'TELEGRAM_SENT_META_KEY', '_wptelegram_sent_on_first_publish' );
+
+add_action( 'admin_menu', function() {
+	add_menu_page( 'Telegram', 'Telegram', 'manage_options', 'kaslek-telegram', 'kaslek_telegram_settings_page', 'dashicons-paper-plane', 3 );
+} );
+
+function kaslek_telegram_settings_page() {
+	if ( isset( $_POST['kaslek_telegram_nonce'] ) && wp_verify_nonce( $_POST['kaslek_telegram_nonce'], 'kaslek_telegram_save' ) ) {
+		update_option( 'kaslek_telegram_enabled', isset( $_POST['telegram_enabled'] ) ? '1' : '0' );
+		echo '<div class="updated notice"><p>Instellingen opgeslagen.</p></div>';
+	}
+	$enabled = get_option( 'kaslek_telegram_enabled', '1' );
+	?>
+	<div class="wrap">
+		<h1>Telegram notificaties</h1>
+		<form method="post">
+			<?php wp_nonce_field( 'kaslek_telegram_save', 'kaslek_telegram_nonce' ); ?>
+			<table class="form-table">
+				<tr>
+					<th>Notificaties</th>
+					<td>
+						<label class="kaslek-toggle">
+							<input type="checkbox" name="telegram_enabled" value="1" <?php checked( $enabled, '1' ); ?>>
+							<span class="kaslek-toggle-slider"></span>
+						</label>
+						<p class="description" style="margin-top:8px;">Aan: nieuwe posts worden naar Telegram gestuurd. Uit: geen verzending.</p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( 'Opslaan' ); ?>
+		</form>
+	</div>
+	<style>
+		.kaslek-toggle { position:relative; display:inline-block; width:50px; height:26px; }
+		.kaslek-toggle input { opacity:0; width:0; height:0; }
+		.kaslek-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:26px; transition:.3s; }
+		.kaslek-toggle-slider:before { content:''; position:absolute; width:20px; height:20px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+		.kaslek-toggle input:checked + .kaslek-toggle-slider { background:#2271b1; }
+		.kaslek-toggle input:checked + .kaslek-toggle-slider:before { transform:translateX(24px); }
+	</style>
+	<?php
+}
+
+add_action( 'transition_post_status', 'wptelegram_send_on_first_publish', 10, 3 );
+
+function wptelegram_send_on_first_publish( $new_status, $old_status, $post ) {
+	if ( get_option( 'kaslek_telegram_enabled', '1' ) !== '1' ) return;
+	if ( $new_status !== 'publish' || $old_status === 'publish' ) return;
+	if ( ! is_a( $post, 'WP_Post' ) || $post->post_type !== 'post' ) return;
+	if ( get_post_meta( $post->ID, TELEGRAM_SENT_META_KEY, true ) ) return;
+
+	$post_date_gmt    = strtotime( $post->post_date_gmt . ' +0000' );
+	$current_time_gmt = gmdate( 'U' );
+	if ( $post_date_gmt > ( $current_time_gmt + 30 ) ) return;
+
+	$token   = trim( TELEGRAM_BOT_TOKEN );
+	$chat_id = trim( TELEGRAM_CHAT_ID );
+	if ( empty( $token ) || $token === 'VUL_HIER_JE_BOT_TOKEN_IN' ) return;
+
+	$content  = $post->post_content;
+	$full_tag = "\x3C\x21\x2D\x2D" . "more" . "\x2D\x2D\x3E";
+
+	if ( ! empty( $content ) && strpos( $content, $full_tag ) !== false ) {
+		$parts  = explode( $full_tag, $content );
+		$teaser = $parts[0];
+	} else {
+		$teaser = wp_trim_words( $content, 45 );
+	}
+
+	$teaser = wp_strip_all_tags( $teaser );
+	$title  = get_the_title( $post->ID );
+	$url    = get_permalink( $post->ID );
+
+	$text  = '<b>' . esc_html( $title ) . "</b>\n\n";
+	$text .= '<i>' . esc_html( $teaser ) . "</i>\n\n";
+	$text .= "<a href='" . esc_url( $url ) . "'>Lees het volledige bericht</a>";
+
+	wp_remote_post( "https://api.telegram.org/bot{$token}/sendMessage", [
+		'method'   => 'POST',
+		'timeout'  => 10,
+		'blocking' => false,
+		'headers'  => [ 'Content-Type' => 'application/json' ],
+		'body'     => json_encode( [ 'chat_id' => $chat_id, 'text' => $text, 'parse_mode' => 'HTML' ] ),
+	] );
+
+	update_post_meta( $post->ID, TELEGRAM_SENT_META_KEY, '1' );
+}
 
 /* ─────────────────────────────────────────
    ADS ROTATOR
@@ -953,3 +1165,874 @@ final class KasLek_Ads_Rotator {
 
 }
 add_action( 'init', [ KasLek_Ads_Rotator::class, 'init' ] );
+
+/* ─────────────────────────────────────────
+   GROK LINK AUDIT
+───────────────────────────────────────── */
+add_action( 'save_post', 'ferdi_schedule_grok_link_audit', 10, 3 );
+function ferdi_schedule_grok_link_audit( $post_id, $post, $update ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( $post->post_status !== 'draft' ) return;
+	wp_clear_scheduled_hook( 'ferdi_run_delayed_link_check', [ $post_id ] );
+	wp_schedule_single_event( time() + 1, 'ferdi_run_delayed_link_check', [ $post_id ] );
+}
+
+add_action( 'ferdi_run_delayed_link_check', 'ferdi_execute_grok_link_audit' );
+function ferdi_execute_grok_link_audit( $post_id ) {
+	$post = get_post( $post_id );
+	if ( ! $post ) return;
+
+	preg_match_all( '/<a[^>]+href=([\'"])(?<href>.+?)\1[^>]*>/i', $post->post_content, $matches );
+	$links         = array_unique( $matches['href'] );
+	$audit_results = [];
+
+	foreach ( $links as $link ) {
+		if ( strpos( $link, 'http' ) !== 0 || strpos( $link, get_site_url() ) === 0 ) continue;
+
+		$response = wp_remote_head( $link, [
+			'timeout'     => 10,
+			'redirection' => 5,
+			'user-agent'  => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+		] );
+		$code = wp_remote_retrieve_response_code( $response );
+
+		if ( in_array( $code, [ 403, 405 ], true ) ) {
+			$response = wp_remote_get( $link, [
+				'timeout'    => 10,
+				'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+			] );
+			$code = wp_remote_retrieve_response_code( $response );
+		}
+
+		$audit_results[ $link ] = $code ?: 'Conn Error';
+	}
+
+	delete_post_meta( $post_id, '_link_audit_manual_ok' );
+	update_post_meta( $post_id, '_link_audit_results', $audit_results );
+	update_post_meta( $post_id, '_link_audit_last_run', current_time( 'mysql' ) );
+}
+
+add_action( 'wp_ajax_ferdi_mark_links_ok', 'ferdi_ajax_mark_links_ok' );
+function ferdi_ajax_mark_links_ok() {
+	if ( ! isset( $_POST['post_id'], $_POST['nonce'] ) ) wp_send_json_error( 'Ongeldige aanvraag.' );
+	$post_id = intval( $_POST['post_id'] );
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'ferdi_mark_ok_' . $post_id ) ) wp_send_json_error( 'Beveiligingscontrole mislukt.' );
+	if ( ! current_user_can( 'edit_post', $post_id ) ) wp_send_json_error( 'Geen rechten.' );
+	update_post_meta( $post_id, '_link_audit_manual_ok', 1 );
+	update_post_meta( $post_id, '_link_audit_manual_ok_by', get_current_user_id() );
+	update_post_meta( $post_id, '_link_audit_manual_ok_at', current_time( 'mysql' ) );
+	wp_send_json_success( 'Gemarkeerd als OK.' );
+}
+
+add_filter( 'manage_post_posts_columns', 'ferdi_add_grok_link_column' );
+function ferdi_add_grok_link_column( $columns ) {
+	$columns['grok_links'] = 'Grok-links';
+	return $columns;
+}
+
+add_action( 'manage_post_posts_custom_column', 'ferdi_fill_grok_link_column', 10, 2 );
+function ferdi_fill_grok_link_column( $column, $post_id ) {
+	if ( $column !== 'grok_links' ) return;
+	$results   = get_post_meta( $post_id, '_link_audit_results', true );
+	$last_run  = get_post_meta( $post_id, '_link_audit_last_run', true );
+	$manual_ok = get_post_meta( $post_id, '_link_audit_manual_ok', true );
+	if ( empty( $last_run ) ) return;
+	if ( $manual_ok ) {
+		echo '<strong style="color:#46b450;background:#e7f7ed;padding:2px 8px;border-radius:4px;">OK*</strong>';
+		return;
+	}
+	$has_errors = false;
+	if ( is_array( $results ) ) {
+		foreach ( $results as $code ) {
+			if ( ! in_array( $code, [ 200, 201, 301, 302 ], true ) ) { $has_errors = true; break; }
+		}
+	}
+	if ( ! $has_errors && ! empty( $results ) ) {
+		echo '<strong style="color:#46b450;background:#e7f7ed;padding:2px 8px;border-radius:4px;">OK</strong>';
+	} elseif ( $has_errors ) {
+		echo '<strong style="color:#dc3232;background:#fbeaea;padding:2px 8px;border-radius:4px;">Let op</strong>';
+	} else {
+		echo '<span style="color:#ccc;">–</span>';
+	}
+}
+
+add_action( 'add_meta_boxes', 'ferdi_add_grok_audit_metabox' );
+function ferdi_add_grok_audit_metabox() {
+	$post_id   = get_the_ID();
+	$results   = get_post_meta( $post_id, '_link_audit_results', true );
+	$manual_ok = get_post_meta( $post_id, '_link_audit_manual_ok', true );
+	$title     = 'Grok Link Audit';
+	if ( ! $manual_ok && is_array( $results ) ) {
+		foreach ( $results as $code ) {
+			if ( ! in_array( $code, [ 200, 201, 301, 302 ], true ) ) {
+				$title = '<span style="color:#dc3232;">&#10069;</span> ' . $title;
+				break;
+			}
+		}
+	}
+	add_meta_box( 'ferdi_grok_link_errors', $title, 'ferdi_render_grok_audit_metabox', 'post', 'normal', 'high' );
+}
+
+function ferdi_render_grok_audit_metabox( $post ) {
+	$results   = get_post_meta( $post->ID, '_link_audit_results', true );
+	$manual_ok = get_post_meta( $post->ID, '_link_audit_manual_ok', true );
+	$ok_by     = get_post_meta( $post->ID, '_link_audit_manual_ok_by', true );
+	$ok_at     = get_post_meta( $post->ID, '_link_audit_manual_ok_at', true );
+
+	$errors = [];
+	if ( is_array( $results ) ) {
+		foreach ( $results as $link => $code ) {
+			if ( ! in_array( $code, [ 200, 201, 301, 302 ], true ) ) $errors[ $link ] = $code;
+		}
+	}
+
+	$nonce = wp_create_nonce( 'ferdi_mark_ok_' . $post->ID );
+
+	if ( $manual_ok ) {
+		$user_info = $ok_by ? get_userdata( $ok_by ) : null;
+		$username  = $user_info ? esc_html( $user_info->display_name ) : 'onbekend';
+		echo '<p style="color:#46b450;">&#10003; Handmatig gemarkeerd als OK door <strong>' . $username . '</strong> op ' . esc_html( $ok_at ) . '.</p>';
+		echo '<p style="color:#999;font-size:12px;">Bij de volgende auditrun wordt deze markering automatisch gereset.</p>';
+		return;
+	}
+
+	if ( empty( $errors ) ) {
+		echo '<p style="color:#46b450;">&#10003; Alle links in dit concept werken correct.</p>';
+		return;
+	}
+
+	echo '<p style="color:#dc3232;font-weight:bold;">&#9888; Sommige links konden niet worden gevalideerd.</p>';
+	echo '<table class="wp-list-table widefat fixed striped" style="margin-top:10px;">';
+	echo '<thead><tr><th>Link URL</th><th>Linktekst</th><th>Code</th><th>Actie</th></tr></thead><tbody>';
+
+	foreach ( $errors as $url => $code ) {
+		$link_text = 'Onbekend';
+		if ( preg_match( '/<a[^>]+href=[\'"]' . preg_quote( $url, '/' ) . '[\'"][^>]*>(.*?)<\/a>/i', $post->post_content, $m ) ) {
+			$link_text = strip_tags( $m[1] );
+		}
+		$search_terms = str_replace( [ 'https://', 'http://', 'www.', '.nl', '.com', '.de', '.eu', '.fr', '-', '_', '/', '?', '=' ], ' ', $url );
+		$search_terms = preg_replace( '/utm_.*?($|\s)/', '', $search_terms );
+		$google_url   = 'https://www.google.com/search?q=' . urlencode( trim( preg_replace( '/\s+/', ' ', $search_terms ) ) );
+		echo '<tr>';
+		echo '<td><a href="' . esc_url( $url ) . '" target="_blank" rel="noreferrer">' . esc_html( $url ) . '</a></td>';
+		echo '<td>' . esc_html( $link_text ) . '</td>';
+		echo '<td>' . esc_html( $code ) . '</td>';
+		echo '<td><a href="' . esc_url( $google_url ) . '" target="_blank" class="button button-secondary">Opzoeken</a></td>';
+		echo '</tr>';
+	}
+
+	echo '</tbody></table>';
+	echo '<p style="margin-top:16px;">';
+	echo '<button type="button" id="ferdi-mark-ok-btn" class="button button-primary" data-post-id="' . esc_attr( $post->ID ) . '" data-nonce="' . esc_attr( $nonce ) . '">Markeer als OK</button>';
+	echo '<span id="ferdi-mark-ok-msg" style="margin-left:12px;display:none;"></span>';
+	echo '</p>';
+	?>
+	<script>
+	(function() {
+		var btn = document.getElementById('ferdi-mark-ok-btn');
+		if (!btn) return;
+		btn.addEventListener('click', function() {
+			btn.disabled = true;
+			btn.textContent = 'Bezig...';
+			var data = new FormData();
+			data.append('action', 'ferdi_mark_links_ok');
+			data.append('post_id', btn.dataset.postId);
+			data.append('nonce', btn.dataset.nonce);
+			fetch(ajaxurl, { method: 'POST', body: data })
+				.then(function(r) { return r.json(); })
+				.then(function(json) {
+					var msg = document.getElementById('ferdi-mark-ok-msg');
+					if (json.success) {
+						msg.style.color = '#46b450';
+						msg.textContent = 'Gemarkeerd als OK. Herlaad de pagina om de status te zien.';
+					} else {
+						msg.style.color = '#dc3232';
+						msg.textContent = 'Fout: ' + json.data;
+						btn.disabled = false;
+						btn.textContent = 'Markeer als OK';
+					}
+					msg.style.display = 'inline';
+				})
+				.catch(function() {
+					var msg = document.getElementById('ferdi-mark-ok-msg');
+					msg.style.color = '#dc3232';
+					msg.textContent = 'Verbindingsfout. Probeer opnieuw.';
+					msg.style.display = 'inline';
+					btn.disabled = false;
+					btn.textContent = 'Markeer als OK';
+				});
+		});
+	})();
+	</script>
+	<?php
+}
+
+add_action( 'admin_head', 'ferdi_grok_column_style' );
+function ferdi_grok_column_style() {
+	echo '<style>.column-grok_links{width:110px!important;text-align:center}</style>';
+}
+
+/* ─────────────────────────────────────────
+   QUOTE CHECK
+───────────────────────────────────────── */
+add_action( 'save_post', 'ferdi_run_quote_check', 20, 3 );
+function ferdi_run_quote_check( $post_id, $post, $update ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( wp_is_post_revision( $post_id ) ) return;
+	if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return;
+
+	$content = isset( $_POST['content'] ) ? wp_kses_post( wp_unslash( $_POST['content'] ) ) : $post->post_content;
+
+	preg_match_all( '/<[^>]*>(*SKIP)(*FAIL)|(?:&#8220;|\x{201C}|")([^"&#\x{201D}]+)(?:&#8221;|\x{201D}|")/u', $content, $matches );
+
+	$quotes = array_unique( array_map( 'trim', $matches[1] ) );
+	$quotes = array_filter( $quotes );
+
+	if ( empty( $quotes ) ) {
+		delete_post_meta( $post_id, '_quote_check_quotes' );
+		delete_post_meta( $post_id, '_quote_check_status' );
+		return;
+	}
+
+	update_post_meta( $post_id, '_quote_check_quotes', array_values( $quotes ) );
+	update_post_meta( $post_id, '_quote_check_status', 'unchecked' );
+}
+
+add_action( 'wp_ajax_ferdi_mark_quotes_ok', 'ferdi_ajax_mark_quotes_ok' );
+function ferdi_ajax_mark_quotes_ok() {
+	if ( ! isset( $_POST['post_id'] ) || ! isset( $_POST['nonce'] ) ) {
+		wp_send_json_error( 'Ongeldige aanvraag.' );
+	}
+	$post_id = intval( $_POST['post_id'] );
+	if ( ! wp_verify_nonce( $_POST['nonce'], 'ferdi_quote_ok_' . $post_id ) ) {
+		wp_send_json_error( 'Beveiligingscontrole mislukt.' );
+	}
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		wp_send_json_error( 'Geen rechten.' );
+	}
+	update_post_meta( $post_id, '_quote_check_status', 'ok' );
+	update_post_meta( $post_id, '_quote_check_ok_by', get_current_user_id() );
+	update_post_meta( $post_id, '_quote_check_ok_at', current_time( 'mysql' ) );
+	wp_send_json_success( 'Quotes gemarkeerd als OK.' );
+}
+
+add_filter( 'manage_post_posts_columns', 'ferdi_add_quote_column' );
+function ferdi_add_quote_column( $columns ) {
+	$columns['quote_check'] = 'Quotes';
+	return $columns;
+}
+
+add_action( 'manage_post_posts_custom_column', 'ferdi_fill_quote_column', 10, 2 );
+function ferdi_fill_quote_column( $column, $post_id ) {
+	if ( $column !== 'quote_check' ) return;
+	$quotes = get_post_meta( $post_id, '_quote_check_quotes', true );
+	$status = get_post_meta( $post_id, '_quote_check_status', true );
+	if ( empty( $quotes ) ) return;
+	if ( $status === 'ok' ) {
+		echo '<strong style="color:#46b450;background:#e7f7ed;padding:2px 8px;border-radius:4px;">Ok</strong>';
+	} else {
+		echo '<strong style="color:#dc3232;background:#fbeaea;padding:2px 8px;border-radius:4px;">Quote</strong>';
+	}
+}
+
+add_action( 'add_meta_boxes', 'ferdi_add_quote_metabox' );
+function ferdi_add_quote_metabox() {
+	add_meta_box( 'ferdi_quote_check', 'Quote Check', 'ferdi_render_quote_metabox', 'post', 'normal', 'high' );
+}
+
+function ferdi_render_quote_metabox( $post ) {
+	$quotes = get_post_meta( $post->ID, '_quote_check_quotes', true );
+	$status = get_post_meta( $post->ID, '_quote_check_status', true );
+	$ok_by  = get_post_meta( $post->ID, '_quote_check_ok_by', true );
+	$ok_at  = get_post_meta( $post->ID, '_quote_check_ok_at', true );
+
+	if ( empty( $quotes ) ) {
+		echo '<p style="color:#999;">Geen quotes gevonden in dit artikel.</p>';
+		return;
+	}
+
+	$nonce = wp_create_nonce( 'ferdi_quote_ok_' . $post->ID );
+
+	if ( $status === 'ok' ) {
+		$user_info = $ok_by ? get_userdata( $ok_by ) : null;
+		$username  = $user_info ? esc_html( $user_info->display_name ) : 'onbekend';
+		echo '<p style="color:#46b450;">&#10003; Quotes gemarkeerd als OK door <strong>' . $username . '</strong> op ' . esc_html( $ok_at ) . '.</p>';
+		return;
+	}
+
+	echo '<table class="wp-list-table widefat fixed striped" style="margin-top:10px;">';
+	echo '<thead><tr><th>Quote</th><th>Actie</th></tr></thead><tbody>';
+	foreach ( $quotes as $quote ) {
+		$google_url = 'https://www.google.com/search?q=' . urlencode( '"' . $quote . '"' );
+		echo '<tr>';
+		echo '<td>"' . esc_html( $quote ) . '"</td>';
+		echo '<td><a href="' . esc_url( $google_url ) . '" target="_blank" rel="noreferrer noopener" class="button button-secondary">Opzoeken</a></td>';
+		echo '</tr>';
+	}
+	echo '</tbody></table>';
+
+	echo '<p style="margin-top:16px;">';
+	echo '<button type="button" id="ferdi-quotes-ok-btn" class="button button-primary" data-post-id="' . esc_attr( $post->ID ) . '" data-nonce="' . esc_attr( $nonce ) . '">Quotes okay</button>';
+	echo '<span id="ferdi-quotes-ok-msg" style="margin-left:12px;display:none;"></span>';
+	echo '</p>';
+	?>
+	<script>
+	(function() {
+		var btn = document.getElementById('ferdi-quotes-ok-btn');
+		if (!btn) return;
+		btn.addEventListener('click', function() {
+			btn.disabled = true;
+			btn.textContent = 'Bezig...';
+			var data = new FormData();
+			data.append('action', 'ferdi_mark_quotes_ok');
+			data.append('post_id', btn.dataset.postId);
+			data.append('nonce', btn.dataset.nonce);
+			fetch(ajaxurl, { method: 'POST', body: data })
+				.then(function(r) { return r.json(); })
+				.then(function(json) {
+					var msg = document.getElementById('ferdi-quotes-ok-msg');
+					if (json.success) {
+						msg.style.color = '#46b450';
+						msg.textContent = 'OK. Herlaad de pagina om de status te zien.';
+					} else {
+						msg.style.color = '#dc3232';
+						msg.textContent = 'Fout: ' + json.data;
+						btn.disabled = false;
+						btn.textContent = 'Quotes okay';
+					}
+					msg.style.display = 'inline';
+				})
+				.catch(function() {
+					var msg = document.getElementById('ferdi-quotes-ok-msg');
+					msg.style.color = '#dc3232';
+					msg.textContent = 'Verbindingsfout. Probeer opnieuw.';
+					msg.style.display = 'inline';
+					btn.disabled = false;
+					btn.textContent = 'Quotes okay';
+				});
+		});
+	})();
+	</script>
+	<?php
+}
+
+add_action( 'admin_head', 'ferdi_quote_column_style' );
+function ferdi_quote_column_style() {
+	echo '<style>.column-quote_check{width:100px!important;text-align:center}</style>';
+}
+
+add_filter( 'manage_edit-post_sortable_columns', 'ferdi_quote_sortable_column' );
+function ferdi_quote_sortable_column( $columns ) {
+	$columns['quote_check'] = 'quote_check';
+	return $columns;
+}
+
+add_action( 'restrict_manage_posts', 'ferdi_quote_filter_dropdown' );
+function ferdi_quote_filter_dropdown( $post_type ) {
+	if ( $post_type !== 'post' ) return;
+	$current = isset( $_GET['quote_status'] ) ? $_GET['quote_status'] : '';
+	echo '<select name="quote_status">';
+	echo '<option value="">Alle quotes</option>';
+	echo '<option value="unchecked"' . selected( $current, 'unchecked', false ) . '>Quote (niet gecheckt)</option>';
+	echo '<option value="ok"' . selected( $current, 'ok', false ) . '>Ok (gecheckt)</option>';
+	echo '<option value="none"' . selected( $current, 'none', false ) . '>Geen quotes</option>';
+	echo '</select>';
+}
+
+add_action( 'pre_get_posts', 'ferdi_quote_filter_query' );
+function ferdi_quote_filter_query( $query ) {
+	if ( ! is_admin() || ! $query->is_main_query() ) return;
+	if ( $query->get( 'post_type' ) !== 'post' ) return;
+	$status = isset( $_GET['quote_status'] ) ? $_GET['quote_status'] : '';
+	if ( ! $status ) return;
+	if ( $status === 'none' ) {
+		$query->set( 'meta_query', [ [ 'key' => '_quote_check_quotes', 'compare' => 'NOT EXISTS' ] ] );
+	} elseif ( $status === 'unchecked' ) {
+		$query->set( 'meta_query', [ [ 'key' => '_quote_check_status', 'value' => 'unchecked' ] ] );
+	} elseif ( $status === 'ok' ) {
+		$query->set( 'meta_query', [ [ 'key' => '_quote_check_status', 'value' => 'ok' ] ] );
+	}
+}
+
+add_filter( 'bulk_actions-edit-post', 'ferdi_add_bulk_quote_check' );
+function ferdi_add_bulk_quote_check( $actions ) {
+	$actions['run_quote_check'] = 'Quote check uitvoeren';
+	return $actions;
+}
+
+add_filter( 'handle_bulk_actions-edit-post', 'ferdi_handle_bulk_quote_check', 10, 3 );
+function ferdi_handle_bulk_quote_check( $redirect_url, $action, $post_ids ) {
+	if ( $action !== 'run_quote_check' ) return $redirect_url;
+	foreach ( $post_ids as $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) continue;
+		preg_match_all( '/<[^>]*>(*SKIP)(*FAIL)|(?:&#8220;|\x{201C}|")([^"&#\x{201D}]+)(?:&#8221;|\x{201D}|")/u', $post->post_content, $matches );
+		$quotes = array_unique( array_map( 'trim', $matches[1] ) );
+		$quotes = array_filter( $quotes );
+		if ( empty( $quotes ) ) {
+			delete_post_meta( $post_id, '_quote_check_quotes' );
+			delete_post_meta( $post_id, '_quote_check_status' );
+		} else {
+			update_post_meta( $post_id, '_quote_check_quotes', array_values( $quotes ) );
+			update_post_meta( $post_id, '_quote_check_status', 'unchecked' );
+		}
+	}
+	return add_query_arg( 'quote_check_done', count( $post_ids ), $redirect_url );
+}
+
+add_action( 'admin_notices', 'ferdi_bulk_quote_check_notice' );
+function ferdi_bulk_quote_check_notice() {
+	if ( ! isset( $_GET['quote_check_done'] ) ) return;
+	$count = intval( $_GET['quote_check_done'] );
+	echo '<div class="notice notice-success is-dismissible"><p>' . $count . ' artikelen gecheckt op quotes.</p></div>';
+}
+
+/* ─────────────────────────────────────────
+   FACTCHECK AUDIT (GEMINI)
+───────────────────────────────────────── */
+add_action( 'init', function () {
+	foreach ( [
+		'kaslek_factcheck_score'              => 'integer',
+		'kaslek_factcheck_verdict'            => 'string',
+		'kaslek_factcheck_herschrijfadvies'   => 'string',
+	] as $key => $type ) {
+		register_post_meta( 'post', $key, [
+			'show_in_rest'  => true,
+			'single'        => true,
+			'type'          => $type,
+			'auth_callback' => function () { return current_user_can( 'edit_posts' ); },
+		] );
+	}
+} );
+
+add_action( 'add_meta_boxes', function (): void {
+	add_meta_box(
+		'kaslek_factcheck_full_audit',
+		'KasLek Factcheck Resultaten',
+		function ( $post ): void {
+			$score   = get_post_meta( $post->ID, 'kaslek_factcheck_score', true );
+			$verdict = get_post_meta( $post->ID, 'kaslek_factcheck_verdict', true );
+			$suggest = get_post_meta( $post->ID, 'kaslek_factcheck_herschrijfadvies', true );
+
+			echo '<div style="padding:10px 0;">';
+			echo '<p style="margin:0;text-transform:uppercase;font-size:10px;color:#666;font-weight:bold;">Score</p>';
+			if ( $score !== '' ) {
+				$color = ( $score < 70 ) ? '#d63638' : '#2271b1';
+				printf( "<p style='font-size:24px;font-weight:bold;margin:0 0 15px 0;color:%s;'>%s/100</p>", $color, esc_html( $score ) );
+			}
+			echo '<p style="margin:0;text-transform:uppercase;font-size:10px;color:#666;font-weight:bold;">Verdict</p>';
+			echo '<div style="background:#f6f7f7;border-left:4px solid #2271b1;padding:8px 12px;margin:5px 0 15px 0;">' . ( $verdict ? wp_kses_post( wpautop( $verdict ) ) : '–' ) . '</div>';
+			echo '<p style="margin:0;text-transform:uppercase;font-size:10px;color:#666;font-weight:bold;">Herschrijfadvies</p>';
+			echo '<div style="background:#fff8e5;border-left:4px solid #ffb900;padding:8px 12px;margin:5px 0 0 0;">' . ( $suggest ? wp_kses_post( wpautop( $suggest ) ) : '–' ) . '</div>';
+			echo '</div>';
+		},
+		'post', 'normal', 'high'
+	);
+} );
+
+/* ─────────────────────────────────────────
+   AUTEUR RANDOMIZER
+───────────────────────────────────────── */
+add_action( 'save_post', 'kaslek_randomize_author_on_save', 10, 3 );
+function kaslek_randomize_author_on_save( $post_id, $post, $update ) {
+	if ( wp_is_post_revision( $post_id ) || ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) ) return;
+	if ( $post->post_type !== 'post' ) return;
+	if ( intval( $post->post_author ) === 7 && in_array( $post->post_status, [ 'future', 'publish' ], true ) ) {
+		$random_author = [ 2, 4, 5 ][ array_rand( [ 2, 4, 5 ] ) ];
+		remove_action( 'save_post', 'kaslek_randomize_author_on_save', 10 );
+		wp_update_post( [ 'ID' => $post_id, 'post_author' => $random_author ] );
+		add_action( 'save_post', 'kaslek_randomize_author_on_save', 10, 3 );
+	}
+}
+
+/* ─────────────────────────────────────────
+   AUTOQUE
+───────────────────────────────────────── */
+function ferdi_post_is_ready_to_publish( $post_id ) {
+	$post = get_post( $post_id );
+	if ( ! $post ) return false;
+	if ( empty( trim( $post->post_title ) ) ) return false;
+	if ( empty( trim( $post->post_content ) ) ) return false;
+	if ( ! has_post_thumbnail( $post_id ) ) return false;
+	return true;
+}
+
+function ferdi_count_posts_on_date( $timestamp ) {
+	$offset    = (int) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
+	$day_start = gmdate( 'Y-m-d 00:00:00', $timestamp + $offset );
+	$day_end   = gmdate( 'Y-m-d 23:59:59', $timestamp + $offset );
+	$q = new WP_Query( [
+		'post_type'      => 'post',
+		'post_status'    => [ 'publish', 'future' ],
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+		'no_found_rows'  => false,
+		'date_query'     => [ [ 'after' => $day_start, 'before' => $day_end, 'inclusive' => true, 'column' => 'post_date' ] ],
+	] );
+	return (int) $q->found_posts;
+}
+
+function ferdi_execute_autoque_logic( $post_id ) {
+	if ( ! ferdi_post_is_ready_to_publish( $post_id ) ) return false;
+
+	$now        = time();
+	$buffer     = rand( 4 * HOUR_IN_SECONDS, 5 * HOUR_IN_SECONDS );
+	$upcoming   = get_posts( [
+		'numberposts' => 1,
+		'post_status' => 'future',
+		'exclude'     => [ $post_id ],
+		'orderby'     => 'post_date',
+		'order'       => 'DESC',
+		'date_query'  => [ [ 'after' => gmdate( 'Y-m-d H:i:s', $now ), 'inclusive' => true ] ],
+	] );
+
+	$base_time = ! empty( $upcoming ) ? strtotime( $upcoming[0]->post_date_gmt . ' +0000' ) : $now;
+	$new_time  = $base_time + $buffer + rand( 60, 720 );
+
+	$offset      = (int) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
+	$max_per_day = (int) get_option( 'aivd_max_per_day', 3 );
+
+	$attempts = 0;
+	while ( $attempts < 7 ) {
+		$time_of_day = gmdate( 'H:i', $new_time + $offset );
+		if ( $time_of_day >= '21:00' || $time_of_day < '08:00' ) {
+			$target_day = ( $time_of_day >= '21:00' ) ? '+1 day' : 'today';
+			$new_time   = strtotime( $target_day . ' 08:00', $new_time + $offset ) - $offset + rand( 0, 900 );
+		}
+		if ( ferdi_count_posts_on_date( $new_time ) < $max_per_day ) break;
+		$new_time = strtotime( '+1 day 08:00', gmdate( 'Y-m-d', $new_time + $offset ) . ' 00:00:00' ) - $offset + rand( 0, 900 );
+		$attempts++;
+	}
+
+	if ( $new_time < $now ) $new_time = $now + rand( 60, 720 );
+
+	$post_data = [
+		'ID'            => $post_id,
+		'post_date'     => gmdate( 'Y-m-d H:i:s', $new_time + $offset ),
+		'post_date_gmt' => gmdate( 'Y-m-d H:i:s', $new_time ),
+		'post_status'   => ( $new_time <= $now ) ? 'publish' : 'future',
+		'edit_date'     => true,
+	];
+
+	remove_action( 'save_post', 'ferdi_execute_autoque_logic' );
+	$result = wp_update_post( $post_data );
+
+	if ( $result !== 0 && ! is_wp_error( $result ) ) {
+		clean_post_cache( $post_id );
+		if ( $new_time > $now ) {
+			wp_clear_scheduled_hook( 'publish_future_post', [ $post_id ] );
+			wp_schedule_single_event( $new_time, 'publish_future_post', [ $post_id ] );
+		}
+		return gmdate( 'd-m-Y H:i', $new_time + $offset );
+	}
+	return false;
+}
+
+add_filter( 'cron_schedules', function( $schedules ) {
+	if ( ! isset( $schedules['every_3_minutes'] ) ) {
+		$schedules['every_3_minutes'] = [ 'interval' => 180, 'display' => 'Elke 3 minuten' ];
+	}
+	return $schedules;
+} );
+
+add_action( 'init', function() {
+	if ( ! wp_next_scheduled( 'ferdi_silent_observer_run' ) ) {
+		wp_schedule_event( time(), 'every_3_minutes', 'ferdi_silent_observer_run' );
+	}
+} );
+
+add_action( 'ferdi_silent_observer_run', 'ferdi_silent_observer_execute' );
+function ferdi_silent_observer_execute() {
+	if ( ! get_option( 'aivd_autopost_enabled', '1' ) ) return;
+
+	$check_score = get_option( 'aivd_check_factcheck_score', '1' );
+	$threshold   = (int) get_option( 'aivd_factcheck_threshold', 100 );
+
+	$args = [
+		'post_type'   => 'post',
+		'post_status' => 'draft',
+		'numberposts' => 20,
+	];
+
+	if ( $check_score ) {
+		$args['meta_query'] = [ [
+			'key'     => 'kaslek_factcheck_score',
+			'value'   => $threshold,
+			'compare' => '>=',
+			'type'    => 'NUMERIC',
+		] ];
+	}
+
+	$drafts = get_posts( $args );
+	if ( empty( $drafts ) ) return;
+
+	foreach ( $drafts as $post ) {
+		$post_id = $post->ID;
+		if ( ! ferdi_post_is_ready_to_publish( $post_id ) ) continue;
+		if ( get_option( 'aivd_check_grok_links', '1' ) && ! ferdi_observer_links_are_ok( $post_id ) ) continue;
+		if ( get_option( 'aivd_check_quotes', '1' )     && ! ferdi_observer_quotes_are_ok( $post_id ) ) continue;
+		if ( get_post_status( $post_id ) !== 'draft' ) continue;
+		ferdi_execute_autoque_logic( $post_id );
+	}
+}
+
+function ferdi_observer_links_are_ok( $post_id ) {
+	if ( get_post_meta( $post_id, '_link_audit_manual_ok', true ) ) return true;
+	$last_run = get_post_meta( $post_id, '_link_audit_last_run', true );
+	if ( empty( $last_run ) ) return false;
+	$results = get_post_meta( $post_id, '_link_audit_results', true );
+	if ( ! is_array( $results ) || empty( $results ) ) return false;
+	foreach ( $results as $code ) {
+		if ( ! in_array( $code, [ 200, 201, 301, 302 ], true ) ) return false;
+	}
+	return true;
+}
+
+function ferdi_observer_quotes_are_ok( $post_id ) {
+	$quotes = get_post_meta( $post_id, '_quote_check_quotes', true );
+	if ( empty( $quotes ) ) return true;
+	return get_post_meta( $post_id, '_quote_check_status', true ) === 'ok';
+}
+
+add_action( 'post_submitbox_misc_actions', 'ferdi_add_autoque_button' );
+function ferdi_add_autoque_button() {
+	global $post;
+	if ( ! $post || $post->post_type !== 'post' || $post->post_status !== 'draft' ) return;
+
+	$has_title   = ! empty( trim( $post->post_title ) );
+	$has_content = ! empty( trim( $post->post_content ) );
+	$has_thumb   = has_post_thumbnail( $post->ID );
+	$ready       = ferdi_post_is_ready_to_publish( $post->ID );
+
+	$btn_base  = 'width:100%;text-align:center;margin-bottom:6px;display:block;';
+	$btn_white = $btn_base . 'background:#fff;color:#2271b1;border-color:#2271b1;';
+	$btn_blue  = $btn_base . 'background:#2271b1;color:#fff;border-color:#135e96;';
+
+	echo '<div id="ferdi-autoque-container" class="misc-pub-section" style="border-top:1px solid #ddd;padding-top:10px;margin-top:10px;">';
+	echo '<div id="ferdi-autoque-main-ui">';
+	echo '<button type="button" id="ferdi-autoque-btn" class="button button-large" style="' . $btn_white . '"' . ( ! $ready ? ' disabled' : '' ) . '>';
+	echo '<span class="dashicons dashicons-clock" style="vertical-align:middle;margin-right:5px;"></span> Autoque';
+	echo '</button>';
+	echo '</div>';
+
+	if ( ! $ready ) {
+		echo '<ul style="margin:0 0 8px 0;padding:0;list-style:none;font-size:11px;line-height:1.6;">';
+		echo '<li style="color:' . ( $has_title   ? '#00a32a' : '#d63638' ) . ';">' . ( $has_title   ? '&#10003;' : '&#10005;' ) . ' Titel</li>';
+		echo '<li style="color:' . ( $has_content ? '#00a32a' : '#d63638' ) . ';">' . ( $has_content ? '&#10003;' : '&#10005;' ) . ' Bodytekst</li>';
+		echo '<li style="color:' . ( $has_thumb   ? '#00a32a' : '#d63638' ) . ';">' . ( $has_thumb   ? '&#10003;' : '&#10005;' ) . ' Featured image</li>';
+		echo '</ul>';
+	}
+
+	echo '<p id="ferdi-autoque-res" style="margin:0 0 6px 0;font-weight:bold;font-size:11px;color:#00a32a;"></p>';
+	echo '<div id="ferdi-autoque-warning" style="display:none;color:#d63638;font-size:11px;line-height:1.3;margin-bottom:6px;">';
+	echo '<span class="dashicons dashicons-warning" style="font-size:14px;width:14px;height:14px;vertical-align:text-bottom;margin-right:3px;"></span> Sla op als concept om te kunnen Autoquen.';
+	echo '</div>';
+	echo '<button type="button" id="ferdi-factcheck-reset-btn" class="button button-large" style="' . $btn_blue . '">';
+	echo '<span class="dashicons dashicons-yes" style="vertical-align:middle;margin-right:5px;"></span> Factcheck gedaan';
+	echo '</button>';
+	echo '</div>';
+	?>
+	<script type="text/javascript">
+	jQuery(document).ready(function($) {
+		var $main    = $('#ferdi-autoque-main-ui');
+		var $warning = $('#ferdi-autoque-warning');
+		var $btn     = $('#ferdi-autoque-btn');
+
+		function invalidateAutoque() {
+			if ($main.is(':visible')) { $main.hide(); $warning.fadeIn(150); }
+		}
+
+		if (typeof tinymce !== 'undefined') {
+			setTimeout(function() {
+				if (tinymce.get('content')) {
+					tinymce.get('content').on('change keyup input', function() { invalidateAutoque(); });
+				}
+			}, 1000);
+		}
+		$(document).on('input change keydown', '#content, #title, .postbox input, .postbox textarea', function() {
+			invalidateAutoque();
+		});
+
+		$btn.on('click', function(e) {
+			e.preventDefault();
+			$btn.prop('disabled', true).text('Plannen...');
+			$.post(ajaxurl, {
+				action:  'ferdi_manual_autoque',
+				post_id: <?php echo (int) $post->ID; ?>,
+				nonce:   '<?php echo wp_create_nonce( 'autoque_nonce_' . $post->ID ); ?>'
+			}, function(response) {
+				if (response.success) {
+					$('#ferdi-autoque-res').html('Gepland voor: ' + response.data);
+					$main.hide();
+					setTimeout(function(){ location.reload(); }, 1000);
+				} else {
+					alert('Fout: ' + response.data);
+					$btn.prop('disabled', false).html('<span class="dashicons dashicons-clock" style="vertical-align:middle;margin-right:5px;"></span> Autoque');
+				}
+			});
+		});
+
+		$('#ferdi-factcheck-reset-btn').on('click', function(e) {
+			e.preventDefault();
+			var $r = $(this);
+			$r.prop('disabled', true).text('Bezig...');
+			$.post(ajaxurl, {
+				action:  'ferdi_reset_factcheck',
+				post_id: <?php echo (int) $post->ID; ?>,
+				nonce:   '<?php echo wp_create_nonce( 'factcheck_reset_nonce_' . $post->ID ); ?>'
+			}, function(response) {
+				if (response.success) {
+					location.reload();
+				} else {
+					alert('Fout: ' + response.data);
+					$r.prop('disabled', false).html('<span class="dashicons dashicons-yes" style="vertical-align:middle;margin-right:5px;"></span> Factcheck gedaan');
+				}
+			});
+		});
+	});
+	</script>
+	<?php
+}
+
+add_action( 'wp_ajax_ferdi_manual_autoque', function() {
+	$post_id = intval( $_POST['post_id'] );
+	check_ajax_referer( 'autoque_nonce_' . $post_id, 'nonce' );
+	if ( ! current_user_can( 'edit_post', $post_id ) ) wp_send_json_error( 'Geen rechten' );
+	if ( ! ferdi_post_is_ready_to_publish( $post_id ) ) wp_send_json_error( 'Niet gereed: titel, bodytekst of featured image ontbreekt.' );
+	$date = ferdi_execute_autoque_logic( $post_id );
+	if ( $date ) wp_send_json_success( $date );
+	else wp_send_json_error( 'Planning mislukt' );
+} );
+
+add_action( 'wp_ajax_ferdi_reset_factcheck', function() {
+	$post_id = intval( $_POST['post_id'] );
+	check_ajax_referer( 'factcheck_reset_nonce_' . $post_id, 'nonce' );
+	if ( ! current_user_can( 'edit_post', $post_id ) ) wp_send_json_error( 'Geen rechten' );
+	delete_post_meta( $post_id, 'kaslek_factcheck_score' );
+	delete_post_meta( $post_id, 'kaslek_factcheck_verdict' );
+	delete_post_meta( $post_id, 'kaslek_factcheck_herschrijfadvies' );
+	wp_update_post( [ 'ID' => $post_id, 'post_status' => 'draft' ] );
+	wp_send_json_success();
+} );
+
+add_filter( 'manage_post_posts_columns', function( $cols ) {
+	unset( $cols['tags'], $cols['comments'] );
+	$new = [];
+	foreach ( $cols as $k => $v ) {
+		$new[ $k ] = $v;
+		if ( $k === 'title' ) $new['kaslek_factcheck_score'] = 'Score';
+	}
+	return $new;
+} );
+
+add_action( 'manage_post_posts_custom_column', function( $col, $id ) {
+	if ( $col !== 'kaslek_factcheck_score' ) return;
+	wp_cache_delete( $id, 'post_meta' );
+	$score = get_post_meta( $id, 'kaslek_factcheck_score', true );
+	if ( $score === '' || $score === false ) {
+		echo '<span style="color:#ccc;">–</span>';
+	} else {
+		$color = ( intval( $score ) < 70 ) ? '#d63638' : '#00a32a';
+		printf( '<strong style="color:%s;">%d</strong>', $color, intval( $score ) );
+	}
+}, 10, 2 );
+
+/* ─────────────────────────────────────────
+   AIVD INSTELLINGEN
+───────────────────────────────────────── */
+add_action( 'admin_menu', function() {
+	add_menu_page( 'AIVD', 'AIVD', 'manage_options', 'aivd', 'aivd_settings_page', 'dashicons-shield', 2 );
+	add_submenu_page( 'aivd', 'Instellingen', 'Instellingen', 'manage_options', 'aivd', 'aivd_settings_page' );
+} );
+
+function aivd_settings_page() {
+	if ( isset( $_POST['aivd_nonce'] ) && wp_verify_nonce( $_POST['aivd_nonce'], 'aivd_save' ) ) {
+		update_option( 'aivd_autopost_enabled',      isset( $_POST['aivd_autopost_enabled'] )      ? '1' : '0' );
+		update_option( 'aivd_check_grok_links',      isset( $_POST['aivd_check_grok_links'] )      ? '1' : '0' );
+		update_option( 'aivd_check_quotes',          isset( $_POST['aivd_check_quotes'] )          ? '1' : '0' );
+		update_option( 'aivd_check_factcheck_score', isset( $_POST['aivd_check_factcheck_score'] ) ? '1' : '0' );
+		$threshold = (int) ( $_POST['aivd_factcheck_threshold'] ?? 100 );
+		update_option( 'aivd_factcheck_threshold', max( 0, min( 100, (int) round( $threshold / 10 ) * 10 ) ) );
+		$max = (int) ( $_POST['aivd_max_per_day'] ?? 3 );
+		update_option( 'aivd_max_per_day', max( 1, min( 5, $max ) ) );
+		echo '<div class="updated notice"><p>Instellingen opgeslagen.</p></div>';
+	}
+
+	$autopost  = get_option( 'aivd_autopost_enabled',      '1' );
+	$grok      = get_option( 'aivd_check_grok_links',      '1' );
+	$quotes    = get_option( 'aivd_check_quotes',          '1' );
+	$factcheck   = get_option( 'aivd_check_factcheck_score', '1' );
+	$threshold   = (int) get_option( 'aivd_factcheck_threshold', 100 );
+	$max_per_day = (int) get_option( 'aivd_max_per_day', 3 );
+	?>
+	<div class="wrap">
+		<h1>AIVD — Instellingen</h1>
+		<form method="post">
+			<?php wp_nonce_field( 'aivd_save', 'aivd_nonce' ); ?>
+			<table class="form-table">
+				<tr>
+					<th scope="row">Autopost</th>
+					<td>
+						<label class="kaslek-toggle">
+							<input type="checkbox" name="aivd_autopost_enabled" value="1" <?php checked( $autopost, '1' ); ?>>
+							<span class="kaslek-toggle-slider"></span>
+						</label>
+						<p class="description" style="margin-top:8px;">Aan: artikelen gaan live als aan alle voorwaarden is voldaan. Uit: niets gaat live.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Controleer Grok-links</th>
+					<td>
+						<label class="kaslek-toggle">
+							<input type="checkbox" name="aivd_check_grok_links" value="1" <?php checked( $grok, '1' ); ?>>
+							<span class="kaslek-toggle-slider"></span>
+						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Controleer quotes</th>
+					<td>
+						<label class="kaslek-toggle">
+							<input type="checkbox" name="aivd_check_quotes" value="1" <?php checked( $quotes, '1' ); ?>>
+							<span class="kaslek-toggle-slider"></span>
+						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Controleer factcheck-score</th>
+					<td>
+						<label class="kaslek-toggle">
+							<input type="checkbox" name="aivd_check_factcheck_score" value="1" <?php checked( $factcheck, '1' ); ?>>
+							<span class="kaslek-toggle-slider"></span>
+						</label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Max. artikelen per dag</th>
+					<td>
+						<input type="number" name="aivd_max_per_day" value="<?php echo esc_attr( $max_per_day ); ?>" min="1" max="5" step="1" style="width:60px;">
+						<p class="description">Maximaal aantal artikelen dat per dag live gaat (1–5, default 3).</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">Factcheck-drempel</th>
+					<td>
+						<input type="number" name="aivd_factcheck_threshold" value="<?php echo esc_attr( $threshold ); ?>" min="0" max="100" step="10" style="width:80px;">
+						<p class="description">Minimale score om te publiceren (0–100, stappen van 10).</p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( 'Opslaan' ); ?>
+		</form>
+	</div>
+	<style>
+		.kaslek-toggle { position:relative; display:inline-block; width:50px; height:26px; }
+		.kaslek-toggle input { opacity:0; width:0; height:0; }
+		.kaslek-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:26px; transition:.3s; }
+		.kaslek-toggle-slider:before { content:''; position:absolute; width:20px; height:20px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+		.kaslek-toggle input:checked + .kaslek-toggle-slider { background:#2271b1; }
+		.kaslek-toggle input:checked + .kaslek-toggle-slider:before { transform:translateX(24px); }
+	</style>
+	<?php
+}
