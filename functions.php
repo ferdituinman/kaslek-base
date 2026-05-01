@@ -858,7 +858,7 @@ if ( ! defined( 'TELEGRAM_CHAT_ID' ) )       define( 'TELEGRAM_CHAT_ID',       '
 if ( ! defined( 'TELEGRAM_SENT_META_KEY' ) ) define( 'TELEGRAM_SENT_META_KEY', '_wptelegram_sent_on_first_publish' );
 
 add_action( 'admin_menu', function() {
-	add_menu_page( 'Telegram', 'Telegram', 'manage_options', 'kaslek-telegram', 'kaslek_telegram_settings_page', 'dashicons-paper-plane', 3 );
+	add_menu_page( 'Telegram', 'Telegram', 'manage_options', 'kaslek-telegram', 'kaslek_telegram_settings_page', 'dashicons-share', 3 );
 } );
 
 function kaslek_telegram_settings_page() {
@@ -1222,6 +1222,7 @@ function ferdi_ajax_mark_links_ok() {
 	update_post_meta( $post_id, '_link_audit_manual_ok', 1 );
 	update_post_meta( $post_id, '_link_audit_manual_ok_by', get_current_user_id() );
 	update_post_meta( $post_id, '_link_audit_manual_ok_at', current_time( 'mysql' ) );
+	delete_post_meta( $post_id, '_aivd_grok_blocked' );
 	wp_send_json_success( 'Gemarkeerd als OK.' );
 }
 
@@ -1251,7 +1252,9 @@ function ferdi_fill_grok_link_column( $column, $post_id ) {
 	if ( ! $has_errors && ! empty( $results ) ) {
 		echo '<strong style="color:#46b450;background:#e7f7ed;padding:2px 8px;border-radius:4px;">OK</strong>';
 	} elseif ( $has_errors ) {
+		$blocked = get_post_meta( $post_id, '_aivd_grok_blocked', true );
 		echo '<strong style="color:#dc3232;background:#fbeaea;padding:2px 8px;border-radius:4px;">Let op</strong>';
+		if ( $blocked ) echo ' <strong style="color:#fff;background:#dc3232;padding:2px 6px;border-radius:4px;font-size:11px;">&#9888; geblokkeerd</strong>';
 	} else {
 		echo '<span style="color:#ccc;">–</span>';
 	}
@@ -1275,10 +1278,18 @@ function ferdi_add_grok_audit_metabox() {
 }
 
 function ferdi_render_grok_audit_metabox( $post ) {
-	$results   = get_post_meta( $post->ID, '_link_audit_results', true );
-	$manual_ok = get_post_meta( $post->ID, '_link_audit_manual_ok', true );
-	$ok_by     = get_post_meta( $post->ID, '_link_audit_manual_ok_by', true );
-	$ok_at     = get_post_meta( $post->ID, '_link_audit_manual_ok_at', true );
+	$results      = get_post_meta( $post->ID, '_link_audit_results', true );
+	$manual_ok    = get_post_meta( $post->ID, '_link_audit_manual_ok', true );
+	$ok_by        = get_post_meta( $post->ID, '_link_audit_manual_ok_by', true );
+	$ok_at        = get_post_meta( $post->ID, '_link_audit_manual_ok_at', true );
+	$grok_blocked = get_post_meta( $post->ID, '_aivd_grok_blocked', true );
+
+	if ( $grok_blocked && ! $manual_ok ) {
+		echo '<div style="background:#fbeaea;border-left:4px solid #dc3232;padding:10px 14px;margin-bottom:14px;">';
+		echo '<strong style="color:#dc3232;">&#9888; Geblokkeerd door silent observer</strong><br>';
+		echo '<span style="font-size:12px;color:#333;">Dit artikel kan niet live gaan zolang er links met status <em>Let op</em> zijn. Beoordeel de links hieronder en klik op <strong>Markeer als OK</strong> om vrij te geven.</span>';
+		echo '</div>';
+	}
 
 	$errors = [];
 	if ( is_array( $results ) ) {
@@ -1770,7 +1781,10 @@ function ferdi_silent_observer_execute() {
 	foreach ( $drafts as $post ) {
 		$post_id = $post->ID;
 		if ( ! ferdi_post_is_ready_to_publish( $post_id ) ) continue;
-		if ( get_option( 'aivd_check_grok_links', '1' ) && ! ferdi_observer_links_are_ok( $post_id ) ) continue;
+		if ( get_option( 'aivd_check_grok_links', '1' ) && ! ferdi_observer_links_are_ok( $post_id ) ) {
+			update_post_meta( $post_id, '_aivd_grok_blocked', 1 );
+			continue;
+		}
 		if ( get_option( 'aivd_check_quotes', '1' )     && ! ferdi_observer_quotes_are_ok( $post_id ) ) continue;
 		if ( get_post_status( $post_id ) !== 'draft' ) continue;
 		ferdi_execute_autoque_logic( $post_id );
@@ -1782,7 +1796,8 @@ function ferdi_observer_links_are_ok( $post_id ) {
 	$last_run = get_post_meta( $post_id, '_link_audit_last_run', true );
 	if ( empty( $last_run ) ) return false;
 	$results = get_post_meta( $post_id, '_link_audit_results', true );
-	if ( ! is_array( $results ) || empty( $results ) ) return false;
+	if ( ! is_array( $results ) ) return false;
+	if ( empty( $results ) ) return true;
 	foreach ( $results as $code ) {
 		if ( ! in_array( $code, [ 200, 201, 301, 302 ], true ) ) return false;
 	}
@@ -1900,6 +1915,8 @@ add_action( 'wp_ajax_ferdi_manual_autoque', function() {
 	check_ajax_referer( 'autoque_nonce_' . $post_id, 'nonce' );
 	if ( ! current_user_can( 'edit_post', $post_id ) ) wp_send_json_error( 'Geen rechten' );
 	if ( ! ferdi_post_is_ready_to_publish( $post_id ) ) wp_send_json_error( 'Niet gereed: titel, bodytekst of featured image ontbreekt.' );
+	if ( get_option( 'aivd_check_grok_links', '1' ) && ! ferdi_observer_links_are_ok( $post_id ) ) wp_send_json_error( 'Grok-links staan op Let op. Corrigeer de links of markeer ze als OK voor je dit artikel inplant.' );
+	if ( get_option( 'aivd_check_quotes', '1' ) && ! ferdi_observer_quotes_are_ok( $post_id ) ) wp_send_json_error( 'Quotes zijn nog niet gecheckt. Markeer de quotes als OK voor je dit artikel inplant.' );
 	$date = ferdi_execute_autoque_logic( $post_id );
 	if ( $date ) wp_send_json_success( $date );
 	else wp_send_json_error( 'Planning mislukt' );
@@ -1988,15 +2005,17 @@ function aivd_settings_page() {
 							<input type="checkbox" name="aivd_check_grok_links" value="1" <?php checked( $grok, '1' ); ?>>
 							<span class="kaslek-toggle-slider"></span>
 						</label>
+						<p class="description" style="margin-top:8px;">Aan: artikelen met Grok-links status <em>Let op</em> worden geblokkeerd voor livegang. Een redacteur moet de links beoordelen en handmatig vrijgeven.</p>
 					</td>
 				</tr>
 				<tr>
-					<th scope="row">Controleer quotes</th>
+					<th scope="row">Blokkeer quotes</th>
 					<td>
 						<label class="kaslek-toggle">
 							<input type="checkbox" name="aivd_check_quotes" value="1" <?php checked( $quotes, '1' ); ?>>
 							<span class="kaslek-toggle-slider"></span>
 						</label>
+						<p class="description" style="margin-top:8px;">Aan: artikelen met niet-gecheckte quotes worden geblokkeerd. Geen quotes of status <em>ok</em> → mag live. Status <em>niet gecheckt</em> → geblokkeerd.</p>
 					</td>
 				</tr>
 				<tr>
