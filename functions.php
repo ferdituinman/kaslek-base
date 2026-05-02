@@ -574,6 +574,7 @@ add_action( 'wp_footer', function() {
    IMAGE UPLOAD LIMIET
 ───────────────────────────────────────── */
 add_filter( 'wp_generate_attachment_metadata', 'ft_limit_upload_width_1280', 10, 2 );
+if ( ! function_exists( 'ft_limit_upload_width_1280' ) ) :
 function ft_limit_upload_width_1280( $metadata, $attachment_id ) {
 	$mime = get_post_mime_type( $attachment_id );
 	if ( strpos( $mime, 'image/' ) !== 0 ) return $metadata;
@@ -598,6 +599,7 @@ function ft_limit_upload_width_1280( $metadata, $attachment_id ) {
 
 	return $metadata;
 }
+endif;
 
 /* ─────────────────────────────────────────
    FALLBACK NAV
@@ -2174,6 +2176,21 @@ function kaslek_adsense_settings_page() {
 	})();
 	</script>
 	<?php
+}
+
+/* ─────────────────────────────────────────
+   LOCAL IMAGE PROXY (alleen kaslek.local)
+───────────────────────────────────────── */
+if ( strpos( home_url(), 'kaslek.local' ) !== false ) {
+	add_action( 'template_redirect', function() {
+		ob_start( function( $html ) {
+			return str_replace(
+				'http://kaslek.local/wp-content/uploads/',
+				'https://www.kaslek.nl/wp-content/uploads/',
+				$html
+			);
+		} );
+	} );
 }
 
 /* ─────────────────────────────────────────
