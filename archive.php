@@ -46,8 +46,9 @@ if ( is_tag() ) {
 }
 
 /* ── Alle posts laden ── */
+$scroll_max  = (int) get_option( 'kaslek_scroll_max', 0 );
 $query_args = [
-	'posts_per_page' => -1,
+	'posts_per_page' => $scroll_max > 0 ? $scroll_max : -1,
 	'post_status'    => 'publish',
 	'orderby'        => 'date',
 	'order'          => 'DESC',

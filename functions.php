@@ -50,20 +50,6 @@ function kaslek_scripts() {
 		filemtime( get_template_directory() . '/assets/css/kaslek.css' )
 	);
 
-	if ( is_front_page() ) {
-		wp_enqueue_script(
-			'kaslek-infinite-scroll',
-			get_template_directory_uri() . '/assets/js/infinite-scroll.js',
-			[],
-			'1.0.0',
-			true
-		);
-		wp_localize_script( 'kaslek-infinite-scroll', 'kaslekData', [
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'kaslek_infinite_scroll' ),
-		] );
-	}
-
 	if ( is_archive() ) {
 		wp_enqueue_script(
 			'kaslek-archive-scroll',
@@ -78,20 +64,7 @@ function kaslek_scripts() {
 		] );
 	}
 
-	if ( is_singular( 'post' ) ) {
-		wp_enqueue_script(
-			'kaslek-artikel',
-			get_template_directory_uri() . '/assets/js/artikel.js',
-			[],
-			'1.0.0',
-			true
-		);
-		wp_localize_script( 'kaslek-artikel', 'kaslekArtikel', [
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'kaslek_stem' ),
-			'postId'  => get_the_ID(),
-		] );
-	}
+
 }
 add_action( 'wp_enqueue_scripts', 'kaslek_scripts' );
 
@@ -110,38 +83,9 @@ function kaslek_leestijd( $post_id = null ) {
 	return $minuten . ' min';
 }
 
-function kaslek_tijdlabel( $post_id = null ) {
-	$datum    = get_the_date( 'U', $post_id ?: get_the_ID() );
-	$verschil = floor( ( time() - $datum ) / DAY_IN_SECONDS );
-	if ( $verschil === 0 ) return 'Vandaag';
-	if ( $verschil === 1 ) return 'Gisteren';
-	return $verschil . ' dagen geleden';
-}
-
-function kaslek_categorie_label( $post_id = null ) {
-	$cats = get_the_category( $post_id ?: get_the_ID() );
-	if ( empty( $cats ) ) return '';
-	$naam  = esc_html( $cats[0]->name );
-	$slug  = esc_attr( $cats[0]->slug );
-	$link  = esc_url( get_category_link( $cats[0]->term_id ) );
-	return '<a href="' . $link . '" class="cat-label ' . $slug . '">' . $naam . '</a>';
-}
-
 /* ─────────────────────────────────────────
    POST VIEWS
 ───────────────────────────────────────── */
-function kaslek_register_view_script() {
-	if ( ! is_singular( 'post' ) ) return;
-	wp_localize_script( 'kaslek-artikel', 'kaslekArtikel', array_merge(
-		(array) ( isset( $GLOBALS['kaslek_artikel_data'] ) ? $GLOBALS['kaslek_artikel_data'] : [] ),
-		[
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'kaslek_view' ),
-			'postId'  => get_the_ID(),
-		]
-	) );
-}
-
 function kaslek_view_handler() {
 	check_ajax_referer( 'kaslek_view', 'nonce' );
 	$post_id = absint( $_POST['post_id'] );
@@ -231,6 +175,7 @@ add_action( 'init', 'kaslek_dossier_rewrite_rules' );
 
 function kaslek_flush_rewrite_rules() {
 	kaslek_dossier_rewrite_rules();
+	kaslek_remove_category_base_rules();
 	flush_rewrite_rules();
 }
 add_action( 'after_switch_theme', 'kaslek_flush_rewrite_rules' );
@@ -303,6 +248,36 @@ add_filter( 'wpseo_twitter_image', function( $image ) {
 	$src = wp_get_attachment_image_src( $thumbnail_id, 'large' );
 	return $src ? $src[0] : $image;
 } );
+
+/* ─────────────────────────────────────────
+   CATEGORIE-URLs (geen /category/ prefix)
+───────────────────────────────────────── */
+add_filter( 'option_category_base', '__return_empty_string' );
+
+function kaslek_remove_category_base_rules() {
+	$categories = get_categories( [ 'hide_empty' => false ] );
+	foreach ( $categories as $cat ) {
+		add_rewrite_rule(
+			'^' . $cat->slug . '/page/([0-9]+)/?$',
+			'index.php?category_name=' . $cat->slug . '&paged=$matches[1]',
+			'top'
+		);
+		add_rewrite_rule(
+			'^' . $cat->slug . '/?$',
+			'index.php?category_name=' . $cat->slug,
+			'top'
+		);
+	}
+}
+add_action( 'init', 'kaslek_remove_category_base_rules' );
+
+function kaslek_category_permalink( $termlink, $term, $taxonomy ) {
+	if ( $taxonomy === 'category' ) {
+		return home_url( '/' . $term->slug . '/' );
+	}
+	return $termlink;
+}
+add_filter( 'term_link', 'kaslek_category_permalink', 10, 3 );
 
 /* ─────────────────────────────────────────
    KASLEK TOTAL
@@ -398,19 +373,15 @@ add_shortcode( 'kaslek_total', function ( $atts ) {
 } );
 
 add_shortcode( 'kaslek_ad', function() {
-	ob_start();
-	?>
-	<div class="kaslek-ad-shortcode">
-		<ins class="adsbygoogle"
-		     style="display:block;width:100%"
-		     data-ad-client="ca-pub-6115912536653612"
-		     data-ad-slot="4772512111"
-		     data-ad-format="auto"
-		     data-full-width-responsive="true"></ins>
-		<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-	</div>
-	<?php
-	return ob_get_clean();
+	if ( get_option( 'kaslek_adsense_enabled', '1' ) !== '1' ) return '';
+	$formats = get_option( 'kaslek_adsense_formats' );
+	if ( $formats === false ) {
+		// Nog niet geconfigureerd — hardcoded fallback
+		return '<div class="kaslek-ad-shortcode"><ins class="adsbygoogle" style="display:block;width:100%" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>';
+	}
+	if ( empty( $formats ) ) return '';
+	$code = trim( $formats[0]['code'] ?? '' );
+	return $code ? '<div class="kaslek-ad-shortcode">' . $code . '</div>' : '';
 } );
 
 add_action( 'rest_api_init', function () {
@@ -539,13 +510,16 @@ add_filter( 'wp_robots', function( array $robots ): array {
 // Niet-homepage: AdSense direct in <head>
 add_action( 'wp_head', function() {
 	if ( is_front_page() ) return;
-	echo '<meta name="google-adsense-account" content="ca-pub-6115912536653612">' . "\n";
-	echo '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>' . "\n";
+	if ( get_option( 'kaslek_adsense_enabled', '1' ) !== '1' ) return;
+	$default = '<meta name="google-adsense-account" content="ca-pub-6115912536653612">' . "\n" . '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>';
+	$script  = get_option( 'kaslek_adsense_head_script', $default );
+	if ( $script ) echo $script . "\n";
 } );
 
 // Homepage: AdSense laden via IntersectionObserver zodra eerste ad-slot in beeld komt
 add_action( 'wp_footer', function() {
 	if ( ! is_front_page() ) return;
+	if ( get_option( 'kaslek_adsense_enabled', '1' ) !== '1' ) return;
 	?>
 	<script>
 	(function () {
@@ -643,7 +617,6 @@ function kaslek_infinite_scroll_handler() {
 		'post_type'      => 'post',
 		'post_status'    => 'publish',
 		'posts_per_page' => 6,
-		'post__not_in'   => [ 1080 ],
 		'author__in'     => [ 2, 4, 5 ],
 		'offset'         => 14 + ( ( $paged - 1 ) * 6 ),
 	];
@@ -723,22 +696,6 @@ add_action( 'wp_ajax_kaslek_archive_scroll',        'kaslek_archive_scroll_handl
 add_action( 'wp_ajax_nopriv_kaslek_archive_scroll', 'kaslek_archive_scroll_handler' );
 
 
-function kaslek_stem_handler() {
-	check_ajax_referer( 'kaslek_stem', 'nonce' );
-
-	$post_id = absint( $_POST['post_id'] );
-	$stem    = sanitize_text_field( $_POST['stem'] );
-
-	if ( ! in_array( $stem, [ 'ja', 'nee' ], true ) ) wp_die();
-
-	$stemmen          = get_post_meta( $post_id, 'kaslek_stemmen', true ) ?: [ 'ja' => 0, 'nee' => 0 ];
-	$stemmen[ $stem ] = ( $stemmen[ $stem ] ?? 0 ) + 1;
-	update_post_meta( $post_id, 'kaslek_stemmen', $stemmen );
-
-	wp_send_json_success( $stemmen );
-}
-add_action( 'wp_ajax_kaslek_stem',        'kaslek_stem_handler' );
-add_action( 'wp_ajax_nopriv_kaslek_stem', 'kaslek_stem_handler' );
 
 /* ─────────────────────────────────────────
    POLL
@@ -1961,6 +1918,7 @@ add_action( 'manage_post_posts_custom_column', function( $col, $id ) {
 add_action( 'admin_menu', function() {
 	add_menu_page( 'AIVD', 'AIVD', 'manage_options', 'aivd', 'aivd_settings_page', 'dashicons-shield', 3 );
 	add_submenu_page( 'aivd', 'Instellingen', 'Instellingen', 'manage_options', 'aivd', 'aivd_settings_page' );
+	add_submenu_page( 'aivd', 'Infinite Scroll', 'Infinite Scroll', 'manage_options', 'kaslek-infinite-scroll', 'kaslek_infinite_scroll_settings_page' );
 } );
 
 function aivd_settings_page() {
@@ -2056,3 +2014,222 @@ function aivd_settings_page() {
 	</style>
 	<?php
 }
+
+function kaslek_infinite_scroll_settings_page() {
+	if ( isset( $_POST['kaslek_scroll_nonce'] ) && wp_verify_nonce( $_POST['kaslek_scroll_nonce'], 'kaslek_scroll_save' ) ) {
+		update_option( 'kaslek_scroll_max', absint( $_POST['kaslek_scroll_max'] ?? 0 ) );
+		echo '<div class="updated notice is-dismissible"><p>Instellingen opgeslagen.</p></div>';
+	}
+	$max = (int) get_option( 'kaslek_scroll_max', 0 );
+	?>
+	<div class="wrap">
+		<h1>Infinite Scroll</h1>
+		<form method="post">
+			<?php wp_nonce_field( 'kaslek_scroll_save', 'kaslek_scroll_nonce' ); ?>
+			<table class="form-table">
+				<tr>
+					<th scope="row">Maximum artikelen per archief</th>
+					<td>
+						<input type="number" name="kaslek_scroll_max" value="<?php echo esc_attr( $max ); ?>" min="0" step="1" style="width:80px;">
+						<p class="description">0 = onbeperkt (alle artikelen laden). Bij een getal worden maximaal dat aantal artikelen getoond.</p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( 'Opslaan' ); ?>
+		</form>
+	</div>
+	<?php
+}
+
+/* ─────────────────────────────────────────
+   ADSENSE BEHEER
+───────────────────────────────────────── */
+add_action( 'admin_menu', function() {
+	add_submenu_page(
+		'edit.php?post_type=kaslek_ad',
+		'Adsense',
+		'Adsense',
+		'manage_options',
+		'kaslek-adsense',
+		'kaslek_adsense_settings_page'
+	);
+} );
+
+function kaslek_adsense_settings_page() {
+	if ( isset( $_POST['kaslek_adsense_nonce'] ) && wp_verify_nonce( $_POST['kaslek_adsense_nonce'], 'kaslek_adsense_save' ) ) {
+		update_option( 'kaslek_adsense_enabled', isset( $_POST['kaslek_adsense_enabled'] ) ? '1' : '0' );
+		update_option( 'kaslek_adsense_head_script', wp_unslash( $_POST['kaslek_adsense_head_script'] ?? '' ) );
+
+		$formats = [];
+		if ( isset( $_POST['kaslek_formats'] ) && is_array( $_POST['kaslek_formats'] ) ) {
+			foreach ( $_POST['kaslek_formats'] as $f ) {
+				$label = sanitize_text_field( wp_unslash( $f['label'] ?? '' ) );
+				$code  = wp_unslash( $f['code'] ?? '' );
+				if ( $label !== '' || $code !== '' ) {
+					$formats[] = [ 'label' => $label, 'code' => $code ];
+				}
+			}
+		}
+		update_option( 'kaslek_adsense_formats', $formats );
+		echo '<div class="updated notice is-dismissible"><p>Instellingen opgeslagen.</p></div>';
+	}
+
+	$enabled      = get_option( 'kaslek_adsense_enabled', '1' );
+	$default_head = '<meta name="google-adsense-account" content="ca-pub-6115912536653612">' . "\n" . '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6115912536653612" crossorigin="anonymous"></script>';
+	$head_script  = get_option( 'kaslek_adsense_head_script', $default_head );
+	$formats      = get_option( 'kaslek_adsense_formats' );
+
+	if ( $formats === false ) {
+		$formats = [ [
+			'label' => 'Display – vierkant (slot 4772512111)',
+			'code'  => '<ins class="adsbygoogle" style="display:block;width:100%" data-ad-client="ca-pub-6115912536653612" data-ad-slot="4772512111" data-ad-format="auto" data-full-width-responsive="true"></ins>' . "\n" . '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>',
+		] ];
+	}
+	?>
+	<div class="wrap">
+		<h1>Adsense</h1>
+		<form method="post">
+			<?php wp_nonce_field( 'kaslek_adsense_save', 'kaslek_adsense_nonce' ); ?>
+			<table class="form-table">
+				<tr>
+					<th scope="row">Ads aan/uit</th>
+					<td>
+						<label class="kaslek-toggle">
+							<input type="checkbox" name="kaslek_adsense_enabled" value="1" <?php checked( $enabled, '1' ); ?>>
+							<span class="kaslek-toggle-slider"></span>
+						</label>
+						<p class="description" style="margin-top:8px;">Aan: alles werkt zoals normaal. Uit: AdSense-script wordt niet geladen en <code>[kaslek_ad]</code> geeft niets terug. Eigen Ads Manager wordt niet geraakt.</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">AdSense head-fragment</th>
+					<td>
+						<textarea name="kaslek_adsense_head_script" rows="5" style="width:100%;font-family:monospace;font-size:12px;"><?php echo esc_textarea( $head_script ); ?></textarea>
+						<p class="description">HTML-fragment dat in <code>&lt;head&gt;</code> wordt geplaatst op alle pagina's behalve de homepage (homepage laadt AdSense via IntersectionObserver).</p>
+					</td>
+				</tr>
+			</table>
+
+			<h2 style="margin-top:30px;">Ad-formats</h2>
+			<p class="description" style="margin-bottom:16px;">HTML-codes van individuele ad-formats. De eerste in de lijst wordt gebruikt door <code>[kaslek_ad]</code>.</p>
+
+			<div id="kaslek-formats-list">
+				<?php foreach ( $formats as $i => $fmt ) : ?>
+				<div class="kaslek-format-row" style="background:#fafafa;border:1px solid #ddd;border-radius:4px;padding:16px;margin-bottom:12px;">
+					<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+						<input type="text" name="kaslek_formats[<?php echo $i; ?>][label]" value="<?php echo esc_attr( $fmt['label'] ); ?>" placeholder="Label (bijv. Display vierkant)" style="flex:1;font-size:13px;">
+						<button type="button" class="button kaslek-remove-format" style="color:#a00;flex-shrink:0;">Verwijder</button>
+					</div>
+					<textarea name="kaslek_formats[<?php echo $i; ?>][code]" rows="4" style="width:100%;font-family:monospace;font-size:12px;"><?php echo esc_textarea( $fmt['code'] ); ?></textarea>
+				</div>
+				<?php endforeach; ?>
+			</div>
+
+			<p><button type="button" id="kaslek-add-format" class="button" style="margin-bottom:20px;">+ Format toevoegen</button></p>
+
+			<?php submit_button( 'Opslaan' ); ?>
+		</form>
+	</div>
+
+	<template id="kaslek-format-tpl">
+		<div class="kaslek-format-row" style="background:#fafafa;border:1px solid #ddd;border-radius:4px;padding:16px;margin-bottom:12px;">
+			<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+				<input type="text" name="kaslek_formats[__I__][label]" value="" placeholder="Label (bijv. Display vierkant)" style="flex:1;font-size:13px;">
+				<button type="button" class="button kaslek-remove-format" style="color:#a00;flex-shrink:0;">Verwijder</button>
+			</div>
+			<textarea name="kaslek_formats[__I__][code]" rows="4" style="width:100%;font-family:monospace;font-size:12px;"></textarea>
+		</div>
+	</template>
+
+	<style>
+		.kaslek-toggle { position:relative; display:inline-block; width:50px; height:26px; }
+		.kaslek-toggle input { opacity:0; width:0; height:0; }
+		.kaslek-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:26px; transition:.3s; }
+		.kaslek-toggle-slider:before { content:''; position:absolute; width:20px; height:20px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; }
+		.kaslek-toggle input:checked + .kaslek-toggle-slider { background:#2271b1; }
+		.kaslek-toggle input:checked + .kaslek-toggle-slider:before { transform:translateX(24px); }
+	</style>
+	<script>
+	(function () {
+		var list = document.getElementById('kaslek-formats-list');
+		var tpl  = document.getElementById('kaslek-format-tpl').innerHTML;
+		var idx  = <?php echo count( $formats ); ?>;
+
+		document.getElementById('kaslek-add-format').addEventListener('click', function () {
+			var html = tpl.replace(/__I__/g, idx++);
+			var tmp  = document.createElement('div');
+			tmp.innerHTML = html;
+			list.appendChild(tmp.firstElementChild);
+		});
+
+		list.addEventListener('click', function (e) {
+			if (e.target.classList.contains('kaslek-remove-format')) {
+				e.target.closest('.kaslek-format-row').remove();
+			}
+		});
+	})();
+	</script>
+	<?php
+}
+
+/* ─────────────────────────────────────────
+   N8N WORKFLOW TRIGGER
+───────────────────────────────────────── */
+if ( ! defined( 'KASLEK_N8N_WEBHOOK_URL' ) ) {
+	define( 'KASLEK_N8N_WEBHOOK_URL', 'http://n8n.ferdituinman.nl:5678/webhook/verwerk-teksten' );
+}
+
+add_action( 'wp_dashboard_setup', function() {
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	wp_add_dashboard_widget( 'kaslek_n8n_trigger_widget', 'Verwerk nieuwe teksten', 'kaslek_n8n_dashboard_widget_render' );
+} );
+
+function kaslek_n8n_dashboard_widget_render() {
+	$nonce      = wp_create_nonce( 'kaslek_n8n_trigger' );
+	$action_url = admin_url( 'admin-post.php' );
+	?>
+	<p>Start handmatig de workflow die nieuwe teksten verwerkt via n8n.</p>
+	<form method="post" action="<?php echo esc_url( $action_url ); ?>">
+		<input type="hidden" name="action" value="kaslek_n8n_trigger">
+		<input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $nonce ); ?>">
+		<p><button type="submit" class="button button-primary button-hero">Verwerk nieuwe teksten</button></p>
+	</form>
+	<?php
+}
+
+add_action( 'admin_post_kaslek_n8n_trigger', function() {
+	if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Geen toegang' );
+	check_admin_referer( 'kaslek_n8n_trigger' );
+
+	$response = wp_remote_post( KASLEK_N8N_WEBHOOK_URL, [
+		'timeout' => 15,
+		'headers' => [ 'Content-Type' => 'application/json' ],
+		'body'    => wp_json_encode( [
+			'source' => 'wordpress',
+			'user'   => wp_get_current_user()->user_login,
+			'time'   => current_time( 'mysql' ),
+		] ),
+	] );
+
+	if ( is_wp_error( $response ) ) {
+		$notice = [ 'type' => 'error', 'text' => 'Fout bij starten van n8n workflow: ' . $response->get_error_message() ];
+	} else {
+		$code   = wp_remote_retrieve_response_code( $response );
+		$notice = ( $code >= 200 && $code < 300 )
+			? [ 'type' => 'success', 'text' => 'n8n workflow is gestart.' ]
+			: [ 'type' => 'error',   'text' => 'n8n gaf statuscode ' . $code . ' terug.' ];
+	}
+
+	set_transient( 'kaslek_n8n_notice', $notice, 30 );
+	wp_safe_redirect( admin_url( 'index.php' ) );
+	exit;
+} );
+
+add_action( 'admin_notices', function() {
+	if ( ! current_user_can( 'manage_options' ) ) return;
+	$notice = get_transient( 'kaslek_n8n_notice' );
+	if ( ! $notice ) return;
+	delete_transient( 'kaslek_n8n_notice' );
+	$class = $notice['type'] === 'success' ? 'notice-success' : 'notice-error';
+	echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $notice['text'] ) . '</p></div>';
+} );
