@@ -254,28 +254,32 @@ add_filter( 'wpseo_twitter_image', function( $image ) {
 ───────────────────────────────────────── */
 add_filter( 'option_category_base', '__return_empty_string' );
 
-function kaslek_remove_category_base_rules() {
-	$categories = get_categories( [ 'hide_empty' => false ] );
-	foreach ( $categories as $cat ) {
-		add_rewrite_rule(
-			'^' . $cat->slug . '/page/([0-9]+)/?$',
-			'index.php?category_name=' . $cat->slug . '&paged=$matches[1]',
-			'top'
-		);
-		add_rewrite_rule(
-			'^' . $cat->slug . '/?$',
-			'index.php?category_name=' . $cat->slug,
-			'top'
-		);
+if ( ! function_exists( 'kaslek_remove_category_base_rules' ) ) {
+	function kaslek_remove_category_base_rules() {
+		$categories = get_categories( [ 'hide_empty' => false ] );
+		foreach ( $categories as $cat ) {
+			add_rewrite_rule(
+				'^' . $cat->slug . '/page/([0-9]+)/?$',
+				'index.php?category_name=' . $cat->slug . '&paged=$matches[1]',
+				'top'
+			);
+			add_rewrite_rule(
+				'^' . $cat->slug . '/?$',
+				'index.php?category_name=' . $cat->slug,
+				'top'
+			);
+		}
 	}
 }
 add_action( 'init', 'kaslek_remove_category_base_rules' );
 
-function kaslek_category_permalink( $termlink, $term, $taxonomy ) {
-	if ( $taxonomy === 'category' ) {
-		return home_url( '/' . $term->slug . '/' );
+if ( ! function_exists( 'kaslek_category_permalink' ) ) {
+	function kaslek_category_permalink( $termlink, $term, $taxonomy ) {
+		if ( $taxonomy === 'category' ) {
+			return home_url( '/' . $term->slug . '/' );
+		}
+		return $termlink;
 	}
-	return $termlink;
 }
 add_filter( 'term_link', 'kaslek_category_permalink', 10, 3 );
 
