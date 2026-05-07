@@ -18,7 +18,7 @@ get_header(); ?>
 	<div class="over-section over-intro">
 		<div class="over-section-inner">
 			<p class="over-lead">Publiek geld vraagt om publieke controle.</p>
-			<p>KasLek is een onafhankelijk platform voor burgerjournalistiek over overheidsuitgaven. We brengen in kaart wat de overheid uitgeeft, hoe beslissingen worden genomen en waar verantwoording tekortschiet.</p>
+			<p><?= KASLEK_SITE_NAME ?> is een onafhankelijk platform voor burgerjournalistiek over overheidsuitgaven. We brengen in kaart wat de overheid uitgeeft, hoe beslissingen worden genomen en waar verantwoording tekortschiet.</p>
 			<p>We publiceren geen mening. We publiceren gedocumenteerde feiten, afkomstig uit openbare registers, begrotingen, aanbestedingsdatabases en officiële publicaties. Alles wat we schrijven is verifieerbaar. Dat is ons fundament.</p>
 		</div>
 	</div>
@@ -45,7 +45,7 @@ get_header(); ?>
 		<div class="over-section-inner">
 			<div class="over-section-label">Onze overtuiging</div>
 			<h2>Publiek geld is van iedereen.<br>De informatie over de besteding ook.</h2>
-			<p>Transparantie is geen technisch probleem. Het is een politiek probleem. KasLek maakt dat zichtbaar: instelling voor instelling, begrotingspost voor begrotingspost.</p>
+			<p>Transparantie is geen technisch probleem. Het is een politiek probleem. <?= KASLEK_SITE_NAME ?> maakt dat zichtbaar: instelling voor instelling, begrotingspost voor begrotingspost.</p>
 		</div>
 	</div>
 
@@ -54,7 +54,7 @@ get_header(); ?>
 		<div class="over-section-inner">
 			<div class="over-section-label">Wat we doen</div>
 			<h2>Onderzoeken. Rapporteren.<br>Verschil maken.</h2>
-			<p>De aanpak van KasLek is eenvoudig: het geld volgen, de beslissingen traceren en verslag doen van wat burgers recht hebben te weten.</p>
+			<p>De aanpak van <?= KASLEK_SITE_NAME ?> is eenvoudig: het geld volgen, de beslissingen traceren en verslag doen van wat burgers recht hebben te weten.</p>
 
 			<div class="over-pillars">
 				<div class="over-pillar">
@@ -92,7 +92,7 @@ get_header(); ?>
 				<div class="over-principle">
 					<div class="over-principle-num">II</div>
 					<h3>Geen politieke kleur</h3>
-					<p>KasLek is niet verbonden aan een politieke partij, beweging of ideologisch project. We rapporteren over uitgaven ongeacht welke partij de beslissing nam. Ons onderwerp is het gebruik van publiek geld, niet de politieke voorkeur van enige groep.</p>
+					<p><?= KASLEK_SITE_NAME ?> is niet verbonden aan een politieke partij, beweging of ideologisch project. We rapporteren over uitgaven ongeacht welke partij de beslissing nam. Ons onderwerp is het gebruik van publiek geld, niet de politieke voorkeur van enige groep.</p>
 				</div>
 				<div class="over-principle">
 					<div class="over-principle-num">III</div>

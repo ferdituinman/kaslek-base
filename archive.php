@@ -12,12 +12,7 @@ $dossier_link  = '';
 $is_mobile = ( isset( $_SERVER['HTTP_X_WP_VIEWPORT_WIDTH'] ) && (int) $_SERVER['HTTP_X_WP_VIEWPORT_WIDTH'] < 768 )
 	|| wp_is_mobile();
 
-$dossier_slugs = [
-	'belastingen-en-heffingen', 'consultants-en-externe-inhuur', 'defensie-en-militaire-steun',
-	'energie-en-klimaat', 'feitje', 'infrastructuurprojecten', 'migratie-en-opvang',
-	'onderwijs', 'overheid-ict-en-digitalisering', 'politiek-en-bestuur',
-	'stikstof-en-natuur', 'subsidies-en-fondsen', 'veiligheid-en-handhaving', 'zorg-en-sociaal',
-];
+$dossier_slugs = KASLEK_DOSSIER_SLUGS;
 
 if ( is_tag() ) {
 	$archive_type  = 'tag';

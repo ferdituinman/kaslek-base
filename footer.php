@@ -6,8 +6,8 @@
 <footer class="site-footer">
 	<div class="footer-grid">
 		<div class="footer-col">
-			<div class="footer-col-title">Over KasLek</div>
-			<p>KasLek is een onafhankelijk platform voor burgerjournalistiek. Wij leggen bloot waar jouw belastinggeld naartoe gaat.</p>
+			<div class="footer-col-title">Over <?= KASLEK_SITE_NAME ?></div>
+			<p><?= KASLEK_SITE_NAME ?> is een onafhankelijk platform voor burgerjournalistiek. Wij leggen bloot waar jouw belastinggeld naartoe gaat.</p>
 		</div>
 		<div class="footer-col">
 			<div class="footer-col-title">Rubrieken</div>
@@ -18,13 +18,13 @@
 		</div>
 		<div class="footer-col">
 			<div class="footer-col-title">Contact</div>
-			<a href="<?php echo esc_url( get_permalink( get_page_by_path( 'over-kaslek' ) ) ); ?>">Over KasLek</a>
-			<a href="<?php echo esc_url( get_permalink( get_page_by_path( 'nieuwstip-insturen' ) ) ); ?>">Nieuwstip insturen</a>
+			<a href="<?php echo esc_url( get_permalink( get_page_by_path( KASLEK_PAGE_ABOUT ) ) ); ?>">Over <?= KASLEK_SITE_NAME ?></a>
+			<a href="<?php echo esc_url( get_permalink( get_page_by_path( KASLEK_PAGE_TIP ) ) ); ?>">Nieuwstip insturen</a>
 		</div>
 	</div>
 	<div class="footer-bottom">
-		<p>&copy; <?php echo date( 'Y' ); ?> KasLek. Alle rechten voorbehouden.</p>
-		<p>KasLek is een onafhankelijk platform voor burgerjournalistiek.</p>
+		<p>&copy; <?php echo date( 'Y' ); ?> <?= KASLEK_SITE_NAME ?>. Alle rechten voorbehouden.</p>
+		<p><?= KASLEK_SITE_NAME ?> is een onafhankelijk platform voor burgerjournalistiek.</p>
 	</div>
 </footer>
 

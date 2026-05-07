@@ -1,6 +1,25 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+if ( ! defined( 'KASLEK_GA_ID' ) )          define( 'KASLEK_GA_ID', '' );
+if ( ! defined( 'KASLEK_LOCALE' ) )          define( 'KASLEK_LOCALE', 'nl-NL' );
+if ( ! defined( 'KASLEK_EMAIL' ) )           define( 'KASLEK_EMAIL', '' );
+if ( ! defined( 'KASLEK_LANG' ) )            define( 'KASLEK_LANG', 'nl' );
+if ( ! defined( 'KASLEK_DOSSIER_SLUGS' ) )   define( 'KASLEK_DOSSIER_SLUGS', [] );
+if ( ! defined( 'KASLEK_PAGE_ABOUT' ) )      define( 'KASLEK_PAGE_ABOUT', 'over-kaslek' );
+if ( ! defined( 'KASLEK_PAGE_TIP' ) )        define( 'KASLEK_PAGE_TIP',   'nieuwstip-insturen' );
+if ( ! defined( 'KASLEK_SOCIAL_X' ) )        define( 'KASLEK_SOCIAL_X',        '' );
+if ( ! defined( 'KASLEK_SOCIAL_FACEBOOK' ) ) define( 'KASLEK_SOCIAL_FACEBOOK', '' );
+if ( ! defined( 'KASLEK_SOCIAL_BLUESKY' ) )  define( 'KASLEK_SOCIAL_BLUESKY',  '' );
+if ( ! defined( 'KASLEK_SOCIAL_TELEGRAM' ) ) define( 'KASLEK_SOCIAL_TELEGRAM', '' );
+if ( ! defined( 'KASLEK_TAGLINE_1' ) ) define( 'KASLEK_TAGLINE_1', '' );
+if ( ! defined( 'KASLEK_TAGLINE_2' ) ) define( 'KASLEK_TAGLINE_2', '' );
+if ( ! defined( 'KASLEK_TAGLINE_3' ) ) define( 'KASLEK_TAGLINE_3', '' );
+if ( ! defined( 'KASLEK_SITE_NAME' ) )       define( 'KASLEK_SITE_NAME', 'KasLek' );
+if ( ! defined( 'KASLEK_LOGO_URL' ) )        define( 'KASLEK_LOGO_URL', '' );
+if ( ! defined( 'KASLEK_LOCAL_URL' ) )      define( 'KASLEK_LOCAL_URL',      'http://kaslek.local' );
+if ( ! defined( 'KASLEK_PRODUCTION_URL' ) ) define( 'KASLEK_PRODUCTION_URL', 'https://www.kaslek.nl' );
+
 /* ─────────────────────────────────────────
    THEMA SETUP
 ───────────────────────────────────────── */
@@ -16,9 +35,34 @@ function kaslek_setup() {
 
 	register_nav_menus( [
 		'primary' => __( 'Primaire navigatie', 'kaslek' ),
+		'socials' => 'Socials',
 	] );
 }
 add_action( 'after_setup_theme', 'kaslek_setup' );
+
+/* ─────────────────────────────────────────
+   SOCIAL ICONS HELPER
+───────────────────────────────────────── */
+function kaslek_social_icons( string $link_class ): void {
+	$locations = get_nav_menu_locations();
+	if ( empty( $locations['socials'] ) ) return;
+	$items = wp_get_nav_menu_items( $locations['socials'] );
+	if ( ! $items ) return;
+
+	$svgs = [
+		'x'        => '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.851L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+		'twitter'  => '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.851L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+		'facebook' => '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
+		'bluesky'  => '<svg viewBox="0 0 24 24"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.204-.659-.299-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg>',
+		'telegram' => '<svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>',
+	];
+
+	foreach ( $items as $item ) {
+		$key = strtolower( trim( $item->title ) );
+		if ( ! isset( $svgs[ $key ] ) ) continue;
+		echo '<a href="' . esc_url( $item->url ) . '" class="' . esc_attr( $link_class ) . '" target="_blank" rel="noopener" aria-label="' . esc_attr( $item->title ) . '">' . $svgs[ $key ] . '</a>';
+	}
+}
 
 if ( ! isset( $content_width ) ) {
 	$content_width = 860;
@@ -134,7 +178,7 @@ function kaslek_counter_script() {
 			var duration = 1500;
 			var start    = null;
 			function fmt(n) {
-				return Math.round(n).toLocaleString('nl-NL');
+				return Math.round(n).toLocaleString('<?php echo esc_js( KASLEK_LOCALE ); ?>');
 			}
 			function step(ts) {
 				if (!start) start = ts;
@@ -182,13 +226,7 @@ add_action( 'after_switch_theme', 'kaslek_flush_rewrite_rules' );
 
 function kaslek_dossier_tag_link( $termlink, $term, $taxonomy ) {
 	if ( $taxonomy === 'post_tag' ) {
-		$dossier_slugs = [
-			'belastingen-en-heffingen', 'consultants-en-externe-inhuur', 'defensie-en-militaire-steun',
-			'energie-en-klimaat', 'infrastructuurprojecten', 'migratie-en-opvang',
-			'onderwijs', 'overheid-ict-en-digitalisering', 'politiek-en-bestuur',
-			'stikstof-en-natuur', 'subsidies-en-fondsen', 'veiligheid-en-handhaving',
-			'zorg-en-sociaal',
-		];
+		$dossier_slugs = KASLEK_DOSSIER_SLUGS;
 		if ( in_array( $term->slug, $dossier_slugs, true ) ) {
 			return home_url( '/dossiers/' . $term->slug . '/' );
 		}
@@ -200,13 +238,7 @@ add_filter( 'term_link', 'kaslek_dossier_tag_link', 10, 3 );
 function kaslek_dossier_canonical( $canonical ) {
 	if ( is_tag() ) {
 		$term = get_queried_object();
-		$dossier_slugs = [
-			'belastingen-en-heffingen', 'consultants-en-externe-inhuur', 'defensie-en-militaire-steun',
-			'energie-en-klimaat', 'infrastructuurprojecten', 'migratie-en-opvang',
-			'onderwijs', 'overheid-ict-en-digitalisering', 'politiek-en-bestuur',
-			'stikstof-en-natuur', 'subsidies-en-fondsen', 'veiligheid-en-handhaving',
-			'zorg-en-sociaal',
-		];
+		$dossier_slugs = KASLEK_DOSSIER_SLUGS;
 		if ( $term && in_array( $term->slug, $dossier_slugs, true ) ) {
 			return home_url( '/dossiers/' . $term->slug . '/' );
 		}
@@ -479,13 +511,13 @@ add_action( 'wp_footer', function() {
 			removeListeners();
 			var s = document.createElement( 'script' );
 			s.async = true;
-			s.src = 'https://www.googletagmanager.com/gtag/js?id=G-1DZQ6K8M6V';
+			s.src = 'https://www.googletagmanager.com/gtag/js?id=<?php echo esc_js( KASLEK_GA_ID ); ?>';
 			document.head.appendChild( s );
 			s.onload = function () {
 				window.dataLayer = window.dataLayer || [];
 				function gtag(){ dataLayer.push( arguments ); }
 				gtag( 'js', new Date() );
-				gtag( 'config', 'G-1DZQ6K8M6V' );
+				gtag( 'config', '<?php echo esc_js( KASLEK_GA_ID ); ?>' );
 			};
 		}
 
@@ -1365,7 +1397,7 @@ function ferdi_run_quote_check( $post_id, $post, $update ) {
 
 	if ( empty( $quotes ) ) {
 		delete_post_meta( $post_id, '_quote_check_quotes' );
-		delete_post_meta( $post_id, '_quote_check_status' );
+		update_post_meta( $post_id, '_quote_check_status', 'ok' );
 		return;
 	}
 
@@ -1546,7 +1578,7 @@ function ferdi_handle_bulk_quote_check( $redirect_url, $action, $post_ids ) {
 		$quotes = array_filter( $quotes );
 		if ( empty( $quotes ) ) {
 			delete_post_meta( $post_id, '_quote_check_quotes' );
-			delete_post_meta( $post_id, '_quote_check_status' );
+			update_post_meta( $post_id, '_quote_check_status', 'ok' );
 		} else {
 			update_post_meta( $post_id, '_quote_check_quotes', array_values( $quotes ) );
 			update_post_meta( $post_id, '_quote_check_status', 'unchecked' );
@@ -1679,6 +1711,8 @@ function ferdi_execute_autoque_logic( $post_id ) {
 		$attempts++;
 	}
 
+	if ( ferdi_count_posts_on_date( $new_time ) >= $max_per_day ) return false;
+
 	if ( $new_time < $now ) $new_time = $now + rand( 60, 720 );
 
 	$post_data = [
@@ -1736,6 +1770,11 @@ function ferdi_silent_observer_execute() {
 			'compare' => '>=',
 			'type'    => 'NUMERIC',
 		] ];
+	} else {
+		$args['meta_query'] = [ [
+			'key'     => 'kaslek_factcheck_score',
+			'compare' => 'EXISTS',
+		] ];
 	}
 
 	$drafts = get_posts( $args );
@@ -1768,8 +1807,6 @@ function ferdi_observer_links_are_ok( $post_id ) {
 }
 
 function ferdi_observer_quotes_are_ok( $post_id ) {
-	$quotes = get_post_meta( $post_id, '_quote_check_quotes', true );
-	if ( empty( $quotes ) ) return true;
 	return get_post_meta( $post_id, '_quote_check_status', true ) === 'ok';
 }
 
@@ -2181,12 +2218,12 @@ function kaslek_adsense_settings_page() {
 /* ─────────────────────────────────────────
    LOCAL IMAGE PROXY (alleen kaslek.local)
 ───────────────────────────────────────── */
-if ( strpos( home_url(), 'kaslek.local' ) !== false ) {
+if ( strpos( home_url(), KASLEK_LOCAL_URL ) !== false ) {
 	add_action( 'template_redirect', function() {
 		ob_start( function( $html ) {
 			return str_replace(
-				'http://kaslek.local/wp-content/uploads/',
-				'https://www.kaslek.nl/wp-content/uploads/',
+				KASLEK_LOCAL_URL . '/wp-content/uploads/',
+				KASLEK_PRODUCTION_URL . '/wp-content/uploads/',
 				$html
 			);
 		} );
