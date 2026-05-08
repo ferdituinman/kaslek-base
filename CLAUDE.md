@@ -93,6 +93,14 @@ Classic (non-block) WordPress parent theme. No build system, no preprocessors. P
 - `kaslek_archive_scroll` — Archive infinite scroll
 - `kaslek_view_count` — Post view counter via sendBeacon
 
+## Local development — OPcache
+
+Local by Flywheel gebruikt PHP OPcache. **PHP-template wijzigingen komen pas door na een OPcache-flush** — de browser ziet de oude versie zolang de cache warm is. CSS-wijzigingen (via `filemtime()` versioning) komen wél direct door.
+
+Diagnose: als een CSS-change wél werkt maar een PHP-template change niet → OPcache.
+
+Oplossing: gebruik `wp_add_inline_style()` in `functions.php` in plaats van inline styles in PHP-templates. Dat is CSS, omzeilt OPcache volledig.
+
 ## AdSense
 
 Publisher ID en slot staan in WordPress opties (option-based, niet hardcoded).
