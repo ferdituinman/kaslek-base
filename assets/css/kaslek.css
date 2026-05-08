@@ -30,6 +30,7 @@
   --hero-content-bg:       linear-gradient(to bottom, #1B3E5F 60%, transparent 100%);
   --card-overlay-bg:       linear-gradient(to top, rgba(3,42,78,0.95) 0%, rgba(3,42,78,0.5) 50%, rgba(3,42,78,0.15) 100%);
   --archive-overlay-bg:    linear-gradient(to top, rgba(3,42,78,0.95) 0%, rgba(3,42,78,0.4) 60%, transparent 100%);
+  --hero-main-bg:          var(--primary);
 }
 
 /* ── RESET ── */
@@ -687,12 +688,12 @@ a:hover { text-decoration: underline; }
   .site-nav a { padding: 13px 14px 10px; font-size: 11px; white-space: nowrap; display: flex; align-items: center; }
   .hero-section { grid-template-columns: 1fr; }
   .hero-stack { display: none; }
-  .hero-main { aspect-ratio: unset !important; display: flex !important; flex-direction: column; overflow: hidden !important; position: relative; background: var(--primary); }
+  .hero-main { aspect-ratio: unset !important; display: flex !important; flex-direction: column; overflow: hidden !important; position: relative; background: var(--hero-main-bg); }
   .hero-img-wrap { position: relative; inset: unset; order: 2; overflow: hidden; aspect-ratio: 16/9; width: 100%; flex-shrink: 0; }
   .hero-main img { position: absolute !important; top: 0; left: 0; width: 100% !important; height: 100% !important; object-fit: cover; object-position: center top; display: block; max-width: none; }
   .hero-main-content { position: static !important; order: 1; padding: 18px 16px 60px; margin-bottom: -55px; background: var(--hero-content-bg); z-index: 1; width: 100%; box-sizing: border-box; }
   .hero-overlay { position: absolute; inset: 0; background: var(--hero-overlay-mobile-bg); z-index: 1; pointer-events: none; }
-  .hero-main-title { font-size: 18px; max-width: 100%; color: #fff; }
+  .hero-main-title { font-size: 18px; max-width: 100%; color: var(--hero-text-color); }
   .hero-main-excerpt { display: block; font-size: 13px; max-width: 100%; margin-top: 6px; }
   body.home .site-nav { display: none; }
   .hero-main-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #fff; color: var(--primary); font-family: var(--font); font-size: 14px; font-weight: 700; line-height: 1; padding: 10px 18px; border-radius: 0; text-decoration: none; vertical-align: middle; margin-top: 20px; }
@@ -1233,7 +1234,7 @@ a:hover { text-decoration: underline; }
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    background: linear-gradient(to bottom, #032A4E 0%, #032A4E 8%, rgba(3,42,78,0) 52%);
+    background: var(--hero-overlay-mobile-bg);
   }
   .archive-layout { padding-top: 16px; }
 }
