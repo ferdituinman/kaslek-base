@@ -1,6 +1,8 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+add_filter( 'show_admin_bar', '__return_false' );
+
 if ( ! defined( 'KASLEK_GA_ID' ) )          define( 'KASLEK_GA_ID', '' );
 if ( ! defined( 'KASLEK_LOCALE' ) )          define( 'KASLEK_LOCALE', 'nl-NL' );
 if ( ! defined( 'KASLEK_EMAIL' ) )           define( 'KASLEK_EMAIL', '' );
@@ -44,23 +46,23 @@ add_action( 'after_setup_theme', 'kaslek_setup' );
    SOCIAL ICONS HELPER
 ───────────────────────────────────────── */
 function kaslek_social_icons( string $link_class ): void {
-	$locations = get_nav_menu_locations();
-	if ( empty( $locations['socials'] ) ) return;
-	$items = wp_get_nav_menu_items( $locations['socials'] );
-	if ( ! $items ) return;
-
 	$svgs = [
 		'x'        => '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.851L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
-		'twitter'  => '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.736-8.851L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
 		'facebook' => '<svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
 		'bluesky'  => '<svg viewBox="0 0 24 24"><path d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.204-.659-.299-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg>',
 		'telegram' => '<svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>',
 	];
 
-	foreach ( $items as $item ) {
-		$key = strtolower( trim( $item->title ) );
-		if ( ! isset( $svgs[ $key ] ) ) continue;
-		echo '<a href="' . esc_url( $item->url ) . '" class="' . esc_attr( $link_class ) . '" target="_blank" rel="noopener" aria-label="' . esc_attr( $item->title ) . '">' . $svgs[ $key ] . '</a>';
+	$links = [
+		'x'        => defined( 'KASLEK_SOCIAL_X' )        ? KASLEK_SOCIAL_X        : '',
+		'facebook' => defined( 'KASLEK_SOCIAL_FACEBOOK' )  ? KASLEK_SOCIAL_FACEBOOK : '',
+		'bluesky'  => defined( 'KASLEK_SOCIAL_BLUESKY' )   ? KASLEK_SOCIAL_BLUESKY  : '',
+		'telegram' => defined( 'KASLEK_SOCIAL_TELEGRAM' )  ? KASLEK_SOCIAL_TELEGRAM : '',
+	];
+
+	foreach ( $links as $key => $url ) {
+		if ( ! $url ) continue;
+		echo '<a href="' . esc_url( $url ) . '" class="' . esc_attr( $link_class ) . '" target="_blank" rel="noopener" aria-label="' . esc_attr( ucfirst( $key ) ) . '">' . $svgs[ $key ] . '</a>';
 	}
 }
 
@@ -494,7 +496,7 @@ add_action( 'admin_head-edit.php', function () {
 
 add_action( 'wp_head', function() {
 	echo '<meta name="referrer" content="no-referrer">' . "\n";
-	echo '<meta name="theme-color" content="#1B3E5F">' . "\n";
+	echo '<meta name="theme-color" content="#FFD700">' . "\n";
 } );
 
 // gtag: laadt na eerste interactie of na 5 seconden
@@ -789,39 +791,47 @@ function ft_render_poll_results( $post_id ) {
 	$yes_pct = $total > 0 ? round( ( $yes / $total ) * 100 ) : 0;
 	$no_pct  = $total > 0 ? round( ( $no  / $total ) * 100 ) : 0;
 
+	$label_yes    = apply_filters( 'kaslek_poll_yes',           'Ja' );
+	$label_no     = apply_filters( 'kaslek_poll_no',            'Nee' );
+	$label_voters = apply_filters( 'kaslek_poll_voters_label',  'Aantal stemmers' );
+
 	ob_start(); ?>
 	<div class="ft-poll-results">
 		<div class="ft-poll-bar-row">
-			<span class="ft-poll-label">Ja</span>
+			<span class="ft-poll-label"><?php echo esc_html( $label_yes ); ?></span>
 			<div class="ft-poll-bar"><div class="ft-poll-bar-fill ft-poll-bar-yes" style="width:<?php echo esc_attr( $yes_pct ); ?>%;"></div></div>
 			<span class="ft-poll-percent"><?php echo esc_html( $yes_pct ); ?>%</span>
 		</div>
 		<div class="ft-poll-bar-row">
-			<span class="ft-poll-label">Nee</span>
+			<span class="ft-poll-label"><?php echo esc_html( $label_no ); ?></span>
 			<div class="ft-poll-bar"><div class="ft-poll-bar-fill ft-poll-bar-no" style="width:<?php echo esc_attr( $no_pct ); ?>%;"></div></div>
 			<span class="ft-poll-percent"><?php echo esc_html( $no_pct ); ?>%</span>
 		</div>
-		<p class="ft-poll-voters-count">Aantal stemmers: <?php echo intval( $total ); ?></p>
+		<p class="ft-poll-voters-count"><?php echo esc_html( $label_voters ); ?>: <?php echo intval( $total ); ?></p>
 	</div>
 	<?php
 	return ob_get_clean();
 }
 
 function ft_render_post_poll( $post_id ) {
-	$has_voted = isset( $_COOKIE[ 'ft_poll_' . $post_id ] );
-	$nonce     = wp_create_nonce( 'ft_poll_vote_action_' . $post_id );
+	$has_voted    = isset( $_COOKIE[ 'ft_poll_' . $post_id ] );
+	$nonce        = wp_create_nonce( 'ft_poll_vote_action_' . $post_id );
+	$question     = apply_filters( 'kaslek_poll_question', 'Is dit een nuttige geldbesteding?' );
+	$label_yes    = apply_filters( 'kaslek_poll_yes',      'Ja' );
+	$label_no     = apply_filters( 'kaslek_poll_no',       'Nee' );
+
 	ob_start(); ?>
 	<div class="ft-poll-wrapper" id="ft-poll-wrapper-<?php echo esc_attr( $post_id ); ?>">
-		<h3 class="ft-poll-title">Is dit een nuttige geldbesteding?</h3>
+		<h3 class="ft-poll-title"><?php echo esc_html( $question ); ?></h3>
 		<div class="ft-poll-buttons" id="ft-poll-buttons-<?php echo esc_attr( $post_id ); ?>"<?php echo $has_voted ? ' style="display:none;"' : ''; ?>>
 			<button type="button" class="ft-poll-btn"
 				data-post-id="<?php echo esc_attr( $post_id ); ?>"
 				data-vote="yes"
-				data-nonce="<?php echo esc_attr( $nonce ); ?>">Ja</button>
+				data-nonce="<?php echo esc_attr( $nonce ); ?>"><?php echo esc_html( $label_yes ); ?></button>
 			<button type="button" class="ft-poll-btn"
 				data-post-id="<?php echo esc_attr( $post_id ); ?>"
 				data-vote="no"
-				data-nonce="<?php echo esc_attr( $nonce ); ?>">Nee</button>
+				data-nonce="<?php echo esc_attr( $nonce ); ?>"><?php echo esc_html( $label_no ); ?></button>
 		</div>
 		<div id="ft-poll-results-<?php echo esc_attr( $post_id ); ?>"<?php echo $has_voted ? '' : ' style="display:none;"'; ?>>
 			<?php if ( $has_voted ) echo ft_render_poll_results( $post_id ); ?>
@@ -1401,7 +1411,18 @@ function ferdi_run_quote_check( $post_id, $post, $update ) {
 		return;
 	}
 
-	update_post_meta( $post_id, '_quote_check_quotes', array_values( $quotes ) );
+	$new_quotes     = array_values( $quotes );
+	$current_status = get_post_meta( $post_id, '_quote_check_status', true );
+	$stored_quotes  = get_post_meta( $post_id, '_quote_check_quotes', true ) ?: [];
+
+	update_post_meta( $post_id, '_quote_check_quotes', $new_quotes );
+
+	if ( $current_status === 'ok' ) {
+		$a = $stored_quotes; sort( $a );
+		$b = $new_quotes;    sort( $b );
+		if ( $a === $b ) return;
+	}
+
 	update_post_meta( $post_id, '_quote_check_status', 'unchecked' );
 }
 
