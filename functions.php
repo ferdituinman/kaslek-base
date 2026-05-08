@@ -2218,12 +2218,16 @@ function kaslek_adsense_settings_page() {
 /* ─────────────────────────────────────────
    LOCAL IMAGE PROXY (alleen kaslek.local)
 ───────────────────────────────────────── */
-if ( strpos( home_url(), KASLEK_LOCAL_URL ) !== false ) {
-	add_action( 'template_redirect', function() {
-		ob_start( function( $html ) {
+$_kaslek_local_host = str_replace( [ 'http://', 'https://' ], '', KASLEK_LOCAL_URL );
+if ( $_kaslek_local_host && strpos( home_url(), $_kaslek_local_host ) !== false ) {
+	add_action( 'template_redirect', function() use ( $_kaslek_local_host ) {
+		ob_start( function( $html ) use ( $_kaslek_local_host ) {
 			return str_replace(
-				KASLEK_LOCAL_URL . '/wp-content/uploads/',
-				KASLEK_PRODUCTION_URL . '/wp-content/uploads/',
+				[
+					'http://'  . $_kaslek_local_host . '/wp-content/',
+					'https://' . $_kaslek_local_host . '/wp-content/',
+				],
+				KASLEK_PRODUCTION_URL . '/wp-content/',
 				$html
 			);
 		} );
