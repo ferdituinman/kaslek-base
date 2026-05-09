@@ -1213,7 +1213,15 @@ function ferdi_execute_grok_link_audit( $post_id ) {
 		$audit_results[ $link ] = $code ?: 'Conn Error';
 	}
 
-	delete_post_meta( $post_id, '_link_audit_manual_ok' );
+	$prev_results = get_post_meta( $post_id, '_link_audit_results', true );
+	$prev_links   = is_array( $prev_results ) ? array_keys( $prev_results ) : [];
+	$new_links    = array_keys( $audit_results );
+	sort( $prev_links );
+	sort( $new_links );
+	if ( $prev_links !== $new_links ) {
+		delete_post_meta( $post_id, '_link_audit_manual_ok' );
+	}
+
 	update_post_meta( $post_id, '_link_audit_results', $audit_results );
 	update_post_meta( $post_id, '_link_audit_last_run', current_time( 'mysql' ) );
 }
