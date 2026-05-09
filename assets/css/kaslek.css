@@ -1238,3 +1238,28 @@ a:hover { text-decoration: underline; }
   }
   .archive-layout { padding-top: 16px; }
 }
+
+/* ── IMPRESSUM ── */
+.impressum-list { margin: 14px 0; padding: 0; list-style: none; }
+.impressum-list li { font-size: 18px; line-height: 1.6; color: var(--text); padding: 10px 0 10px 20px; position: relative; border-bottom: 1px solid var(--border); }
+.impressum-list li:first-child { border-top: 1px solid var(--border); }
+.impressum-list li::before { content: '—'; position: absolute; left: 0; color: var(--primary); opacity: 0.4; top: 14px; font-size: 13px; }
+.impressum-img { width: 100%; height: auto; display: block; margin-top: 32px; }
+
+.impressum-legal { border-top: 1px solid var(--border); padding: 64px 0; }
+.impressum-legal-inner { max-width: 1280px; padding: 0 48px; }
+.impressum-legal h2 { font-family: var(--font); font-size: 28px; font-weight: 700; color: var(--primary); margin: 16px 0 32px; }
+.impressum-legal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
+.impressum-legal-block { padding: 24px 28px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.impressum-legal-block--full { grid-column: 1 / -1; }
+.impressum-legal-label { font-family: var(--font); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--primary); opacity: 0.5; margin-bottom: 10px; display: block; }
+.impressum-legal-block p { font-size: 15px; line-height: 24px; color: var(--text); margin: 0 0 8px; }
+.impressum-legal-block p:last-child { margin-bottom: 0; }
+.impressum-legal-block a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 767px) {
+  .impressum-legal { padding: 40px 0; }
+  .impressum-legal-inner { padding: 0 16px; }
+  .impressum-legal-grid { grid-template-columns: 1fr; }
+  .impressum-legal-block--full { grid-column: 1; }
+}

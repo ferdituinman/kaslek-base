@@ -45,6 +45,8 @@ Fallbacks staan bovenaan `functions.php`.
 Templates met zichtbare tekst staan als override in de child theme.
 De parent versie is fallback — nooit de enige bron van zichtbare copy.
 
+**KRITISCH:** Page templates in kaslek-base bestaan NIET. Ze staan uitsluitend in de child themes. Zet nooit een page template in kaslek-base — dat trekt naar beide sites en breekt één ervan.
+
 Overrides in kaslek-nl en kaslek-de:
 - header.php
 - footer.php
@@ -56,6 +58,18 @@ Overrides in kaslek-nl en kaslek-de:
 - page-nieuwstip.php
 - template-parts/card-horizontal.php
 - template-parts/archive-row.php
+
+Child theme template override werkt alleen als `Template Name:` in de child-file **exact** overeenkomt met die in de base. Een andere naam = aparte template, geen override.
+
+## Deploy-architectuur
+
+kaslek-base wordt gedeployd **vanuit de NL lokale map** (`kaslek\...\kaslek-base`) naar beide servers.
+De ausgabenspur lokale kaslek-base (`ausgabenspur\...\kaslek-base`) wordt **nooit** gedeployd — wijzigingen daar hebben geen effect op productie.
+
+Volgorde bij taalspecifieke wijzigingen:
+1. Wijzig in kaslek-nl (NL) of kaslek-de (DE) — nooit in kaslek-base
+2. Deploy via het bat-bestand
+3. Beide sites trekken dezelfde kaslek-base; child themes zijn per site
 
 ## Remotes (GitHub)
 
