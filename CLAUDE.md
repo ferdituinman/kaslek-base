@@ -19,26 +19,22 @@ kaslek-base moet in **beide** lokale themes-mappen aanwezig zijn:
 
 Na elke wijziging in kaslek-base: kopieer de map ook naar de ausgabenspur themes-map.
 
+## Aanpassingsregels
+
+- "Ausgabenspur" of "DE" = aanpassen in kaslek-de, nooit in kaslek-base
+- "KasLek" of "NL" = aanpassen in kaslek-nl, nooit in kaslek-base
+- kaslek-base alleen aanpassen als fix niet in een child theme kan
+
 ## Config-systeem
 
 Child functions.php laadt als eerste → definieert constanten → parent gebruikt die.
 Parent laadt config via: `require_once get_stylesheet_directory() . '/config.php';`
-Fallbacks staan bovenaan `functions.php`.
+Fallbacks staan bovenaan `functions.php`. Constanten staan gedocumenteerd in config.php per child.
 
-| Constante | NL waarde | DE waarde |
-|-----------|-----------|-----------|
-| KASLEK_SITE_NAME | KasLek | Ausgabenspur |
-| KASLEK_LANG | nl | de |
-| KASLEK_LOCALE | nl-NL | de-DE |
-| KASLEK_GA_ID | G-1DZQ6K8M6V | (nog leeg) |
-| KASLEK_EMAIL | redactie@kaslek.nl | (nog leeg) |
-| KASLEK_TAGLINE_1 | De overheid deelt uit. | Der Staat verteilt. |
-| KASLEK_TAGLINE_2 | Jij betaalt. | Du zahlst. |
-| KASLEK_TAGLINE_3 | Wij kijken mee. | Wir schauen hin. |
-| KASLEK_LOCAL_URL | http://kaslek.local | http://ausgabenspur.local |
-| KASLEK_PRODUCTION_URL | https://www.kaslek.nl | https://www.kaslek.nl (tijdelijk) |
-| KASLEK_PAGE_ABOUT | over-kaslek | ueber-ausgabenspur |
-| KASLEK_PAGE_TIP | nieuwstip-insturen | hinweis-einreichen |
+## Breakpoints
+
+- Mobiel: `max-width: 767px`
+- Desktop: `min-width: 768px`
 
 ## Template overrides
 
@@ -47,18 +43,6 @@ De parent versie is fallback — nooit de enige bron van zichtbare copy.
 
 **KRITISCH:** Page templates in kaslek-base bestaan NIET. Ze staan uitsluitend in de child themes. Zet nooit een page template in kaslek-base — dat trekt naar beide sites en breekt één ervan.
 
-Overrides in kaslek-nl en kaslek-de:
-- header.php
-- footer.php
-- front-page.php
-- single.php
-- archive.php
-- page-dossiers.php
-- page-over-kaslek.php
-- page-nieuwstip.php
-- template-parts/card-horizontal.php
-- template-parts/archive-row.php
-
 Child theme template override werkt alleen als `Template Name:` in de child-file **exact** overeenkomt met die in de base. Een andere naam = aparte template, geen override.
 
 ## Deploy-architectuur
@@ -66,8 +50,8 @@ Child theme template override werkt alleen als `Template Name:` in de child-file
 kaslek-base wordt gedeployd **vanuit de NL lokale map** (`kaslek\...\kaslek-base`) naar beide servers.
 De ausgabenspur lokale kaslek-base (`ausgabenspur\...\kaslek-base`) wordt **nooit** gedeployd — wijzigingen daar hebben geen effect op productie.
 
-Volgorde bij taalspecifieke wijzigingen:
-1. Wijzig in kaslek-nl (NL) of kaslek-de (DE) — nooit in kaslek-base
+Volgorde bij wijzigingen:
+1. Wijzig in kaslek-nl of kaslek-de — nooit direct in kaslek-base tenzij het beide sites raakt
 2. Deploy via het bat-bestand
 3. Beide sites trekken dezelfde kaslek-base; child themes zijn per site
 
@@ -84,7 +68,12 @@ Bat-bestanden staan op: `C:\Users\ferdi\Desktop\deploy\beidesites\`
 - `deploy-nl.bat` — deployed kaslek-nl naar kaslek.nl server
 - `deploy-de.bat` — deployed kaslek-de (DE server nog onbekend)
 
-Server setup instructies: `C:\Users\ferdi\Desktop\deploy\beidesites\server-en-github-setup.txt`
+## Debug-volgorde
+
+Bij onverwacht gedrag altijd in deze volgorde:
+1. CSS — grep op `display:none` in child theme en kaslek-base binnen de juiste breakpoint
+2. JS — zoek op `classList`, `style.display`, `hide`
+3. PHP — condities in templates
 
 ## What This Is
 
@@ -109,11 +98,10 @@ Classic (non-block) WordPress parent theme. No build system, no preprocessors. P
 
 ## Local development — OPcache
 
-Local by Flywheel gebruikt PHP OPcache. **PHP-template wijzigingen komen pas door na een OPcache-flush** — de browser ziet de oude versie zolang de cache warm is. CSS-wijzigingen (via `filemtime()` versioning) komen wél direct door.
+Local by Flywheel gebruikt PHP OPcache. **PHP-template wijzigingen komen pas door na een OPcache-flush.**
 
-Diagnose: als een CSS-change wél werkt maar een PHP-template change niet → OPcache.
-
-Oplossing: gebruik `wp_add_inline_style()` in `functions.php` in plaats van inline styles in PHP-templates. Dat is CSS, omzeilt OPcache volledig.
+Diagnose: CSS-change werkt wel maar PHP-template change niet → OPcache.
+Oplossing: gebruik `wp_add_inline_style()` in `functions.php` in plaats van inline styles in PHP-templates.
 
 ## AdSense
 

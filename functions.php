@@ -2324,3 +2324,116 @@ add_action( 'admin_notices', function() {
 	$class = $notice['type'] === 'success' ? 'notice-success' : 'notice-error';
 	echo '<div class="notice ' . esc_attr( $class ) . ' is-dismissible"><p>' . esc_html( $notice['text'] ) . '</p></div>';
 } );
+
+/* ─────────────────────────────────────────
+   WEIRD DUCK — QC DASHBOARD
+───────────────────────────────────────── */
+
+add_action( 'admin_menu', function() {
+	add_menu_page(
+		'Weird Duck',
+		'Weird Duck',
+		'read',
+		'weird-duck',
+		'kaslek_weird_duck_page',
+		'dashicons-flag',
+		1
+	);
+} );
+
+function kaslek_weird_duck_page() {
+	$threshold = (int) get_option( 'aivd_factcheck_threshold', 100 );
+
+	$posts = get_posts( [
+		'post_status'    => 'draft',
+		'posts_per_page' => -1,
+		'orderby'        => 'date',
+		'order'          => 'ASC',
+	] );
+
+	$todos = [];
+	foreach ( $posts as $post ) {
+		$problems = [];
+
+		// Factcheck: geen score of score < drempel
+		$score = get_post_meta( $post->ID, 'kaslek_factcheck_score', true );
+		if ( $score === '' || (int) $score < $threshold ) {
+			$problems[] = 'factcheck';
+		}
+
+		// Quote: quotes aanwezig maar nog niet gecheckt
+		$quote_status = get_post_meta( $post->ID, '_quote_check_status', true );
+		$quotes       = get_post_meta( $post->ID, '_quote_check_quotes', true );
+		if ( $quote_status !== 'ok' && ! empty( $quotes ) ) {
+			$problems[] = 'quote';
+		}
+
+		// Link: audit gedraaid, gefaalde links, geen manual OK
+		if ( ! get_post_meta( $post->ID, '_link_audit_manual_ok', true ) ) {
+			$link_results = get_post_meta( $post->ID, '_link_audit_results', true );
+			if ( is_array( $link_results ) && ! empty( $link_results ) ) {
+				foreach ( $link_results as $code ) {
+					if ( ! in_array( (int) $code, [ 200, 201, 301, 302 ], true ) ) {
+						$problems[] = 'link';
+						break;
+					}
+				}
+			}
+		}
+
+		if ( ! empty( $problems ) ) {
+			$todos[] = [
+				'post'     => $post,
+				'problems' => $problems,
+				'count'    => count( $problems ),
+			];
+		}
+	}
+
+	usort( $todos, function( $a, $b ) {
+		if ( $b['count'] !== $a['count'] ) return $b['count'] - $a['count'];
+		return strcmp( $a['post']->post_date, $b['post']->post_date );
+	} );
+
+	$labels = [
+		'factcheck' => [ 'label' => 'Factcheck', 'color' => '#d63638' ],
+		'quote'     => [ 'label' => 'Quote',     'color' => '#dba617' ],
+		'link'      => [ 'label' => 'Link',      'color' => '#2271b1' ],
+	];
+	?>
+	<div class="wrap">
+		<h1>Weird Duck</h1>
+		<?php if ( empty( $todos ) ) : ?>
+			<p style="margin-top:1.5em;">Geen openstaande taken.</p>
+		<?php else : ?>
+			<table class="wp-list-table widefat fixed striped" style="margin-top:1.5em;">
+				<thead>
+					<tr>
+						<th style="width:50%;">Artikel</th>
+						<th style="width:15%;">Datum</th>
+						<th>Taken</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $todos as $todo ) :
+						$post     = $todo['post'];
+						$edit_url = get_edit_post_link( $post->ID );
+					?>
+					<tr>
+						<td><a href="<?php echo esc_url( $edit_url ); ?>"><?php echo esc_html( $post->post_title ?: '(geen titel)' ); ?></a></td>
+						<td><?php echo esc_html( mysql2date( 'd-m-Y', $post->post_date ) ); ?></td>
+						<td>
+							<?php foreach ( $todo['problems'] as $p ) :
+								$l = $labels[ $p ];
+							?>
+							<span style="display:inline-block;margin:0 4px 4px 0;padding:2px 10px;border-radius:3px;font-size:12px;font-weight:600;color:#fff;background:<?php echo esc_attr( $l['color'] ); ?>;"><?php echo esc_html( $l['label'] ); ?></span>
+							<?php endforeach; ?>
+						</td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
+	</div>
+	<?php
+}
