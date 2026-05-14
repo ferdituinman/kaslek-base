@@ -2261,6 +2261,44 @@ if ( $_kaslek_local_host && strpos( home_url(), $_kaslek_local_host ) !== false 
 			);
 		} );
 	} );
+
+	// Batch-fetch alle ontbrekende thumbnail-URLs in één request per WP_Query
+	add_filter( 'the_posts', function( $posts, $query ) {
+		static $done = [];
+		if ( is_admin() || empty( $posts ) ) return $posts;
+		$missing = [];
+		foreach ( $posts as $post ) {
+			$thumb_id = (int) get_post_thumbnail_id( $post->ID );
+			if ( ! $thumb_id || isset( $done[ $thumb_id ] ) ) continue;
+			$done[ $thumb_id ] = true;
+			$cached = get_transient( 'kaslek_prod_thumb_' . $thumb_id . '_large' );
+			if ( $cached === false || $cached === '' ) $missing[] = $thumb_id;
+		}
+		if ( empty( $missing ) ) return $posts;
+		$resp = wp_remote_get(
+			KASLEK_PRODUCTION_URL . '/wp-json/wp/v2/media?include=' . implode( ',', $missing ) . '&per_page=100',
+			[ 'timeout' => 8 ]
+		);
+		if ( ! is_wp_error( $resp ) && 200 === wp_remote_retrieve_response_code( $resp ) ) {
+			foreach ( json_decode( wp_remote_retrieve_body( $resp ), true ) as $item ) {
+				foreach ( [ 'thumbnail', 'medium', 'medium_large', 'large', 'full' ] as $s ) {
+					$prod_url = $item['media_details']['sizes'][ $s ]['source_url'] ?? ( $item['source_url'] ?? '' );
+					if ( $prod_url ) set_transient( 'kaslek_prod_thumb_' . $item['id'] . '_' . $s, $prod_url, WEEK_IN_SECONDS );
+				}
+			}
+		}
+		return $posts;
+	}, 10, 2 );
+
+	// Geef gecachte productie-URL terug als lokale attachment ontbreekt
+	add_filter( 'post_thumbnail_url', function( $url, $post, $size ) {
+		if ( $url ) return $url;
+		$id = get_post_thumbnail_id( $post );
+		if ( ! $id ) return $url;
+		$key = 'kaslek_prod_thumb_' . $id . '_' . ( is_array( $size ) ? implode( 'x', $size ) : $size );
+		$cached = get_transient( $key );
+		return ( $cached && $cached !== '' ) ? $cached : false;
+	}, 10, 3 );
 }
 
 /* ─────────────────────────────────────────

@@ -60,7 +60,7 @@
 						<div class="header-logo-icon">K</div>
 					<?php endif; ?>
 				</a>
-				<span class="header-logo-name"><?= KASLEK_SITE_NAME ?></span>
+				<span class="header-logo-name"><?= defined( 'KASLEK_SITE_NAME_HTML' ) ? KASLEK_SITE_NAME_HTML : esc_html( KASLEK_SITE_NAME ) ?></span>
 			</div>
 			<div class="header-tagline">
 				<?= KASLEK_TAGLINE_1 ?><br>
