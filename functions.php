@@ -330,6 +330,13 @@ add_action( 'init', function () {
 		'show_in_rest'  => true,
 		'auth_callback' => function () { return current_user_can( 'edit_posts' ); },
 	] );
+	register_post_meta( 'post', '_quote_check_status', array(
+		'show_in_rest'  => true,
+		'single'        => true,
+		'type'          => 'string',
+		'default'       => 'unchecked',
+		'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+	) );
 } );
 
 add_action( 'add_meta_boxes', function () {
